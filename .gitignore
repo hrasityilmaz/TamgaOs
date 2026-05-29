@@ -1,0 +1,4 @@
+*.exe
+*.pdb
+.zig-cache/
+zig-out/
