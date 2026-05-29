@@ -1,4 +1,4 @@
-**TamgaOs
+**TamgaOs** 
 Codename: YULA
 
 Experimental x86 operating system written in Zig and C.
@@ -7,8 +7,8 @@ This project started as a small learning kernel for exploring low-level systems 
 
 For now the kernel only prints:
 
-Zig -> KERNEL OK
-C   -> KERNEL OK_C_
+Zig -> KERNEL OK  
+C   -> KERNEL OK_C_  
 
-Both Zig and C versions successfully boot through Limine using a Multiboot2 header.
+Both Zig and C versions successfully boot through Limine using a Multiboot2 header.  
 For iso using xorriso.
