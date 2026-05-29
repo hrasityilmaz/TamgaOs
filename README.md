@@ -1,5 +1,4 @@
-**TamgaOs**   
-Codename: YULA
+**TamgaOs** (yula)  
 
 Experimental x86 operating system written in Zig and C.
 
