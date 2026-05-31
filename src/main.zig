@@ -1,9 +1,18 @@
+const gdt = @import("gdt.zig");
+
 const VGA = @as([*]volatile u16, @ptrFromInt(0xB8000));
 
-export fn _start() noreturn {
-    const msg = "KERNEL OK";
+fn print(msg: []const u8, offset: usize) void {
     for (msg, 0..) |c, i| {
-        VGA[i] = (@as(u16, 0x0F) << 8) | c;
+        VGA[offset + i] = (@as(u16, 0x0F) << 8) | c;
     }
+}
+
+export fn _start() noreturn {
+    gdt.init();
+
+    print("TamgaOs", 0);
+    print("GDT OK", 80);
+
     while (true) asm volatile ("hlt");
 }
