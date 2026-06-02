@@ -1,6 +1,7 @@
-const gdt = @import("gdt.zig");
-
 const VGA = @as([*]volatile u16, @ptrFromInt(0xB8000));
+
+// gdt written in assembly
+extern fn gdt_load() void;
 
 fn print(msg: []const u8, offset: usize) void {
     for (msg, 0..) |c, i| {
@@ -9,7 +10,7 @@ fn print(msg: []const u8, offset: usize) void {
 }
 
 export fn _start() noreturn {
-    gdt.init();
+    gdt_load();
 
     print("TamgaOs", 0);
     print("GDT OK", 80);
