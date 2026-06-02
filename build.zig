@@ -7,17 +7,17 @@ pub fn build(b: *std.Build) void {
         .abi = .none,
 
         // For gdt
-        .cpu_features_sub = std.Target.x86.featureSet(&.{
-            .mmx,
-            .sse,
-            .sse2,
-            .sse3,
-            .ssse3,
-            .sse4_1,
-            .sse4_2,
-            .avx,
-            .avx2,
-        }),
+        //.cpu_features_sub = std.Target.x86.featureSet(&.{
+        //    .mmx,
+        //    .sse,
+        //    .sse2,
+        //    .sse3,
+        // .ssse3,
+        //    .sse4_1,
+        //    .sse4_2,
+        //    .avx,
+        //    .avx2,
+        //}),
     });
 
     const optimize = b.standardOptimizeOption(.{});
@@ -34,6 +34,12 @@ pub fn build(b: *std.Build) void {
         }),
     });
 
+    const nasm = b.addSystemCommand(&.{"nasm"});
+    nasm.addArgs(&.{ "-f", "elf32", "-o" });
+    const gdt_obj = nasm.addOutputFileArg("gdt.o");
+    nasm.addFileArg(b.path("src/gdt.asm"));
+
+    kernel.root_module.addObjectFile(gdt_obj);
     kernel.root_module.addAssemblyFile(b.path("src/multiboot.s"));
     kernel.setLinkerScript(b.path("linker.ld"));
     kernel.entry = .{ .symbol_name = "_start" };
