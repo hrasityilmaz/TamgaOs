@@ -13,7 +13,7 @@ Features currently implemented:
 * Basic Global Descriptor Table (GDT) setup
 * Zig and C kernel implementations for comparison
 * ISO generation through xorriso
-
+  
 Both Zig and C versions successfully boot through **Limine** using a **Multiboot2** header.
 
 Current output:
@@ -65,5 +65,4 @@ for Zig kernel
 ## Notes
 
 This is not a production operating system.  
-I will add development notes on https://auctra.app  
-TamgaOS is a small experimental kernel built for learning operating system development, x86 architecture, bootloaders, memory management concepts, and low-level systems programming.
+Development notes on https://auctra.app 
