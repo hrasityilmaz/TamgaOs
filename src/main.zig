@@ -1,3 +1,4 @@
+const serial = @import("serial.zig");
 const VGA = @as([*]volatile u16, @ptrFromInt(0xB8000));
 
 // gdt written in assembly
@@ -11,6 +12,8 @@ fn print(msg: []const u8, offset: usize) void {
 
 export fn _start() noreturn {
     gdt_load();
+    serial.init();
+    serial.write("TamgaOs Booting...\n");
 
     print("TamgaOs", 0);
     print("GDT OK", 80);
