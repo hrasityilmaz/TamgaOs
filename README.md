@@ -55,11 +55,22 @@ for C_kernel:
 ```powershell
  qemu-system-i386 -cdrom .\TamgaOS_C.iso -boot d  
 ```
+
+if with log on serial for C kernel
+
+```powershell
+qemu-system-i386 -cdrom .\TamgaOS_C.iso -boot d -serial stdio
+```
 or 
 
 for Zig kernel  
 ```powershell
  qemu-system-i386 -cdrom .\TamgaOS.iso -boot d  
+```
+if with log on serial for Zig Kernel
+
+```powershell
+qemu-system-i386 -cdrom .\TamgaOS.iso -boot d -serial stdio
 ```
 
 ## Notes
