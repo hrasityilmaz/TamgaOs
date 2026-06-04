@@ -75,6 +75,15 @@ pub fn build(b: *std.Build) void {
         },
     });
 
+    c_kernel.root_module.addCSourceFile(.{
+        .file = b.path("src/C/serial.c"),
+        .flags = &.{
+            "-ffreestanding",
+            "-fno-stack-protector",
+            "-fno-builtin",
+        },
+    });
+
     c_kernel.root_module.addAssemblyFile(b.path("src/multiboot.s"));
     c_kernel.setLinkerScript(b.path("linker.ld"));
     c_kernel.entry = .{ .symbol_name = "_start" };
