@@ -1,4 +1,5 @@
 #include "gdt.h"
+#include "idt.h"
 #include "serial.h"
 
 static volatile unsigned short *const VGA = (volatile unsigned short *)0xB8000;
@@ -14,13 +15,17 @@ static void print(const char *msg, unsigned int offset) {
 
 void _start(void) {
   gdt_init();
-  volatile unsigned short *VGA = (volatile unsigned short *)0xB8000;
   serial_init();
+  idt_init();
 
-  serial_write("TamgaOs Booting\n");
+  serial_write("IDT OK\n");
+  // serial_write("TamgaOs Booting\n");
   print("TamgaOS __C__", 0);
   print("GDT OK __C__", 80);
   print("Kernel OK __C__", 160);
+
+  //__asm__ volatile("div %0" : : "r"(0));
+
   for (;;) {
     __asm__ volatile("hlt");
   }
