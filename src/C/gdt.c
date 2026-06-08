@@ -35,6 +35,7 @@ void gdt_init(void) {
   make_entry(1, 0, 0xFFFFF, 0x9A, 0xCF); /* code  0x08 */
   make_entry(2, 0, 0xFFFFF, 0x92, 0xCF); /* data  0x10 */
 
+  __asm__ volatile("cli");
   __asm__ volatile("lgdt (%0)" : : "r"(&gdtr));
   __asm__ volatile("ljmp $0x08, $1f\n"
                    "1:             \n"
