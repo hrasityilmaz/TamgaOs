@@ -1,5 +1,9 @@
 # TamgaOS (yula)
 
+
+![TamgaOS](images/tamgaos.gif)  
+
+
 Experimental x86 operating system written in **Zig 0.16.0** and **C**.
 
 TamgaOS started as a small learning kernel for exploring low-level systems programming, executable formats, bootloaders, memory layouts, and operating system internals.
