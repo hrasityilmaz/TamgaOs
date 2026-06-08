@@ -39,7 +39,13 @@ pub fn build(b: *std.Build) void {
     const gdt_obj = nasm.addOutputFileArg("gdt.o");
     nasm.addFileArg(b.path("src/gdt.asm"));
 
+    const nasm_isr = b.addSystemCommand(&.{"nasm"});
+    nasm_isr.addArgs(&.{ "-f", "elf32", "-o" });
+    const isr_obj = nasm_isr.addOutputFileArg("isr.o");
+    nasm_isr.addFileArg(b.path("src/isr.asm"));
+
     kernel.root_module.addObjectFile(gdt_obj);
+    kernel.root_module.addObjectFile(isr_obj);
     kernel.root_module.addAssemblyFile(b.path("src/multiboot.s"));
     kernel.setLinkerScript(b.path("linker.ld"));
     kernel.entry = .{ .symbol_name = "_start" };
@@ -84,6 +90,30 @@ pub fn build(b: *std.Build) void {
         },
     });
 
+    c_kernel.root_module.addCSourceFile(.{
+        .file = b.path("src/C/isr.c"),
+        .flags = &.{
+            "-ffreestanding",
+            "-fno-stack-protector",
+            "-fno-builtin",
+        },
+    });
+
+    c_kernel.root_module.addCSourceFile(.{
+        .file = b.path("src/C/idt.c"),
+        .flags = &.{
+            "-ffreestanding",
+            "-fno-stack-protector",
+            "-fno-builtin",
+        },
+    });
+
+    const nasm_isr_c = b.addSystemCommand(&.{"nasm"});
+    nasm_isr_c.addArgs(&.{ "-f", "elf32", "-o" });
+    const isr_obj_c = nasm_isr_c.addOutputFileArg("isr_c.o");
+    nasm_isr_c.addFileArg(b.path("src/isr.asm"));
+
+    c_kernel.root_module.addObjectFile(isr_obj_c);
     c_kernel.root_module.addAssemblyFile(b.path("src/multiboot.s"));
     c_kernel.setLinkerScript(b.path("linker.ld"));
     c_kernel.entry = .{ .symbol_name = "_start" };
