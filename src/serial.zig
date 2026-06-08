@@ -37,6 +37,35 @@ pub fn write(msg: []const u8) void {
     }
 }
 
+fn hxDigit(v: u4) u8 {
+    if (v < 10) {
+        return @as(u8, '0') + @as(u8, v); //'0' + v;
+    }
+    return @as(u8, 'A') + (@as(u8, v) - 10); //'A' + (v - 10);
+}
+
+pub fn writeHex32(value: u32) void {
+    write("0x");
+    var shift: i32 = 28; // 28 bit shift
+    while (shift >= 0) : (shift -= 4) {
+        const digit: u4 = @truncate(value >> @intCast(shift));
+        writeByte(hxDigit(digit));
+    }
+}
+
+pub fn writeHex16(value: u16) void {
+    writeHex32(value);
+}
+
+pub fn writeHex8(value: u8) void {
+    write("0x");
+    var shift: i32 = 4;
+    while (shift >= 0) : (shift -= 4) {
+        const digit: u4 = @truncate(value >> @intCast(shift));
+        writeByte(hxDigit(digit));
+    }
+}
+
 pub fn init() void {
     outb(COM + 1, 0x00); // interrupt disable
     outb(COM + 3, 0x80); // DLAB on
