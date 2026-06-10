@@ -1,0 +1,7 @@
+[
+  {
+    "directory": "C:\Users\Hrasi\Desktop\TamgaOs\src\ports\arm",
+    "command": "arm-none-eabi-gcc -mcpu=cortex-m4 -mfpu=fpv4-sp-d16 -mfloat-abi=hard -mthumb -O0 -g -Wall -Wextra -std=c11 -Iinclude -c src/main.c -o src/main.o",
+    "file": "src/main.c"
+  }
+]

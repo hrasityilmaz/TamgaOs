@@ -1,0 +1,123 @@
+
+Discarded input sections
+
+ .data          0x00000000        0x0 startup/startup_k64f.o
+ .bss           0x00000000        0x0 startup/startup_k64f.o
+ .text          0x00000000        0x0 src/main.o
+ .data          0x00000000        0x0 src/main.o
+ .bss           0x00000000        0x0 src/main.o
+
+Memory Configuration
+
+Name             Origin             Length             Attributes
+FLASH            0x00000000         0x00100000         xr
+RAM              0x1fff0000         0x00040000         xrw
+*default*        0x00000000         0xffffffff
+
+Linker script and memory map
+
+LOAD startup/startup_k64f.o
+LOAD src/main.o
+START GROUP
+LOAD c:/users/hrasi/gcc-arm/bin/../lib/gcc/arm-none-eabi/10.3.1/thumb/v7e-m+fp/hard\libgcc.a
+LOAD c:/users/hrasi/gcc-arm/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard\libc.a
+END GROUP
+                0x20030000                _stack_top = (ORIGIN (RAM) + LENGTH (RAM))
+
+.vectors        0x00000000       0x40
+ *(.vectors)
+ .vectors       0x00000000       0x40 startup/startup_k64f.o
+
+.FlashConfig    0x00000400       0x10
+                0x00000400                . = ALIGN (0x4)
+ *(.FlashConfig)
+ .FlashConfig   0x00000400       0x10 startup/startup_k64f.o
+
+.text           0x00000410       0xd0
+ *(.text*)
+ .text          0x00000410       0x64 startup/startup_k64f.o
+                0x00000410                Reset_Handler
+                0x00000452                Default_Handler
+ .text.delay    0x00000474       0x22 src/main.o
+ *fill*         0x00000496        0x2 
+ .text.main     0x00000498       0x48 src/main.o
+                0x00000498                main
+ *(.rodata*)
+                0x000004e0                . = ALIGN (0x4)
+                0x000004e0                _data_load = LOADADDR (.data)
+
+.glue_7         0x000004e0        0x0
+ .glue_7        0x000004e0        0x0 linker stubs
+
+.glue_7t        0x000004e0        0x0
+ .glue_7t       0x000004e0        0x0 linker stubs
+
+.vfp11_veneer   0x000004e0        0x0
+ .vfp11_veneer  0x000004e0        0x0 linker stubs
+
+.v4_bx          0x000004e0        0x0
+ .v4_bx         0x000004e0        0x0 linker stubs
+
+.iplt           0x000004e0        0x0
+ .iplt          0x000004e0        0x0 startup/startup_k64f.o
+
+.rel.dyn        0x000004e0        0x0
+ .rel.iplt      0x000004e0        0x0 startup/startup_k64f.o
+
+.data           0x1fff0000        0x0 load address 0x000004e0
+                0x1fff0000                . = ALIGN (0x4)
+                0x1fff0000                _data_start = .
+ *(.data*)
+                0x1fff0000                _data_end = .
+
+.igot.plt       0x1fff0000        0x0 load address 0x000004e0
+ .igot.plt      0x1fff0000        0x0 startup/startup_k64f.o
+
+.bss            0x1fff0000        0x0 load address 0x000004e0
+                0x1fff0000                . = ALIGN (0x4)
+                0x1fff0000                _bss_start = .
+ *(.bss*)
+ *(COMMON)
+                0x1fff0000                _bss_end = .
+OUTPUT(tamgaos.elf elf32-littlearm)
+LOAD linker stubs
+
+.ARM.attributes
+                0x00000000       0x35
+ .ARM.attributes
+                0x00000000       0x25 startup/startup_k64f.o
+ .ARM.attributes
+                0x00000025       0x34 src/main.o
+
+.comment        0x00000000       0x49
+ .comment       0x00000000       0x49 src/main.o
+                                 0x4a (size before relaxing)
+
+.debug_line     0x00000000      0x17a
+ .debug_line    0x00000000       0x6a startup/startup_k64f.o
+ .debug_line    0x0000006a      0x110 src/main.o
+
+.debug_info     0x00000000       0xe5
+ .debug_info    0x00000000       0x26 startup/startup_k64f.o
+ .debug_info    0x00000026       0xbf src/main.o
+
+.debug_abbrev   0x00000000       0x99
+ .debug_abbrev  0x00000000       0x14 startup/startup_k64f.o
+ .debug_abbrev  0x00000014       0x85 src/main.o
+
+.debug_aranges  0x00000000       0x48
+ .debug_aranges
+                0x00000000       0x20 startup/startup_k64f.o
+ .debug_aranges
+                0x00000020       0x28 src/main.o
+
+.debug_str      0x00000000      0x169
+ .debug_str     0x00000000       0x52 startup/startup_k64f.o
+ .debug_str     0x00000052      0x117 src/main.o
+                                0x181 (size before relaxing)
+
+.debug_ranges   0x00000000       0x18
+ .debug_ranges  0x00000000       0x18 src/main.o
+
+.debug_frame    0x00000000       0x54
+ .debug_frame   0x00000000       0x54 src/main.o

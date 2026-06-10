@@ -1,0 +1,503 @@
+
+Discarded input sections
+
+ .text          0x00000000        0x0 src/main.o
+ .data          0x00000000        0x0 src/main.o
+ .bss           0x00000000        0x0 src/main.o
+ .text          0x00000000        0x0 startup/startup_MK64F12.o
+ .data          0x00000000        0x0 startup/startup_MK64F12.o
+ .bss           0x00000000        0x0 startup/startup_MK64F12.o
+
+Memory Configuration
+
+Name             Origin             Length             Attributes
+FLASH            0x00000000         0x00100000         xr
+RAM              0x1fff0000         0x00040000         xrw
+*default*        0x00000000         0xffffffff
+
+Linker script and memory map
+
+LOAD src/main.o
+LOAD startup/startup_MK64F12.o
+START GROUP
+LOAD c:/users/hrasi/gcc-arm/bin/../lib/gcc/arm-none-eabi/10.3.1/thumb/v7e-m+fp/hard\libgcc.a
+LOAD c:/users/hrasi/gcc-arm/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard\libc.a
+END GROUP
+                0x20030000                _vStackTop = (ORIGIN (RAM) + LENGTH (RAM))
+
+.vectors        0x00000000      0x198
+ *(.isr_vector)
+ .isr_vector    0x00000000      0x198 startup/startup_MK64F12.o
+                0x00000000                g_pfnVectors
+                0x00000000                __Vectors
+
+.FlashConfig    0x00000400       0x10
+                0x00000400                . = ALIGN (0x4)
+ *(.FlashConfig)
+ .FlashConfig   0x00000400       0x10 startup/startup_MK64F12.o
+                0x00000400                Flash_Config
+
+.text           0x00000410      0x5c4
+ *(.after_vectors*)
+ .after_vectors.init_data
+                0x00000410       0x46 startup/startup_MK64F12.o
+                0x00000410                data_init
+ .after_vectors.init_bss
+                0x00000456       0x3a startup/startup_MK64F12.o
+                0x00000456                bss_init
+ .after_vectors.reset
+                0x00000490       0x94 startup/startup_MK64F12.o
+                0x00000490                ResetISR
+ .after_vectors
+                0x00000524       0x3c startup/startup_MK64F12.o
+                0x00000524                NMI_Handler
+                0x0000052a                HardFault_Handler
+                0x00000530                MemManage_Handler
+                0x00000536                BusFault_Handler
+                0x0000053c                UsageFault_Handler
+                0x00000542                SVC_Handler
+                0x00000548                DebugMon_Handler
+                0x0000054e                PendSV_Handler
+                0x00000554                SysTick_Handler
+                0x0000055a                DMA_Error_DriverIRQHandler
+                0x0000055a                LPTMR0_DriverIRQHandler
+                0x0000055a                FTM1_DriverIRQHandler
+                0x0000055a                FTM2_DriverIRQHandler
+                0x0000055a                PIT2_DriverIRQHandler
+                0x0000055a                SDHC_DriverIRQHandler
+                0x0000055a                I2S0_Tx_DriverIRQHandler
+                0x0000055a                RTC_Seconds_DriverIRQHandler
+                0x0000055a                DMA6_DriverIRQHandler
+                0x0000055a                LLWU_DriverIRQHandler
+                0x0000055a                MCM_DriverIRQHandler
+                0x0000055a                MCG_DriverIRQHandler
+                0x0000055a                ENET_1588_Timer_DriverIRQHandler
+                0x0000055a                I2C2_DriverIRQHandler
+                0x0000055a                DAC1_DriverIRQHandler
+                0x0000055a                SPI1_DriverIRQHandler
+                0x0000055a                CMP1_DriverIRQHandler
+                0x0000055a                UART5_RX_TX_DriverIRQHandler
+                0x0000055a                FTM0_DriverIRQHandler
+                0x0000055a                IntDefaultHandler
+                0x0000055a                USB0_DriverIRQHandler
+                0x0000055a                UART5_ERR_DriverIRQHandler
+                0x0000055a                PORTC_DriverIRQHandler
+                0x0000055a                DMA11_DriverIRQHandler
+                0x0000055a                DAC0_DriverIRQHandler
+                0x0000055a                DMA10_DriverIRQHandler
+                0x0000055a                CMP2_DriverIRQHandler
+                0x0000055a                UART2_ERR_DriverIRQHandler
+                0x0000055a                SPI2_DriverIRQHandler
+                0x0000055a                LVD_LVW_DriverIRQHandler
+                0x0000055a                PIT0_DriverIRQHandler
+                0x0000055a                RNG_DriverIRQHandler
+                0x0000055a                DMA12_DriverIRQHandler
+                0x0000055a                DMA4_DriverIRQHandler
+                0x0000055a                UART2_RX_TX_DriverIRQHandler
+                0x0000055a                USBDCD_DriverIRQHandler
+                0x0000055a                UART3_ERR_DriverIRQHandler
+                0x0000055a                DMA3_DriverIRQHandler
+                0x0000055a                DMA8_DriverIRQHandler
+                0x0000055a                DMA9_DriverIRQHandler
+                0x0000055a                UART0_ERR_DriverIRQHandler
+                0x0000055a                CMT_DriverIRQHandler
+                0x0000055a                Reserved71_DriverIRQHandler
+                0x0000055a                ADC1_DriverIRQHandler
+                0x0000055a                PORTA_DriverIRQHandler
+                0x0000055a                DMA14_DriverIRQHandler
+                0x0000055a                PIT3_DriverIRQHandler
+                0x0000055a                PIT1_DriverIRQHandler
+                0x0000055a                WDOG_EWM_DriverIRQHandler
+                0x0000055a                PDB0_DriverIRQHandler
+                0x0000055a                RTC_DriverIRQHandler
+                0x0000055a                I2S0_Rx_DriverIRQHandler
+                0x0000055a                Read_Collision_DriverIRQHandler
+                0x0000055a                SWI_DriverIRQHandler
+                0x0000055a                UART4_RX_TX_DriverIRQHandler
+                0x0000055a                UART4_ERR_DriverIRQHandler
+                0x0000055a                PORTB_DriverIRQHandler
+                0x0000055a                UART0_LON_DriverIRQHandler
+                0x0000055a                DMA0_DriverIRQHandler
+                0x0000055a                DMA1_DriverIRQHandler
+                0x0000055a                I2C1_DriverIRQHandler
+                0x0000055a                UART3_RX_TX_DriverIRQHandler
+                0x0000055a                ENET_Receive_DriverIRQHandler
+                0x0000055a                DMA13_DriverIRQHandler
+                0x0000055a                ENET_Error_DriverIRQHandler
+                0x0000055a                DMA15_DriverIRQHandler
+                0x0000055a                UART0_RX_TX_DriverIRQHandler
+                0x0000055a                SPI0_DriverIRQHandler
+                0x0000055a                ADC0_DriverIRQHandler
+                0x0000055a                CMP0_DriverIRQHandler
+                0x0000055a                CAN0_DriverIRQHandler
+                0x0000055a                FTM3_DriverIRQHandler
+                0x0000055a                DMA5_DriverIRQHandler
+                0x0000055a                UART1_ERR_DriverIRQHandler
+                0x0000055a                DMA2_DriverIRQHandler
+                0x0000055a                ENET_Transmit_DriverIRQHandler
+                0x0000055a                PORTD_DriverIRQHandler
+                0x0000055a                PORTE_DriverIRQHandler
+                0x0000055a                FTFE_DriverIRQHandler
+                0x0000055a                I2C0_DriverIRQHandler
+                0x0000055a                DMA7_DriverIRQHandler
+                0x0000055a                UART1_RX_TX_DriverIRQHandler
+ *(.text*)
+ .text.delay    0x00000560       0x22 src/main.o
+ *fill*         0x00000582        0x2 
+ .text.main     0x00000584       0x48 src/main.o
+                0x00000584                main
+ .text.DMA0_IRQHandler
+                0x000005cc        0xc startup/startup_MK64F12.o
+                0x000005cc                DMA0_IRQHandler
+ .text.DMA1_IRQHandler
+                0x000005d8        0xc startup/startup_MK64F12.o
+                0x000005d8                DMA1_IRQHandler
+ .text.DMA2_IRQHandler
+                0x000005e4        0xc startup/startup_MK64F12.o
+                0x000005e4                DMA2_IRQHandler
+ .text.DMA3_IRQHandler
+                0x000005f0        0xc startup/startup_MK64F12.o
+                0x000005f0                DMA3_IRQHandler
+ .text.DMA4_IRQHandler
+                0x000005fc        0xc startup/startup_MK64F12.o
+                0x000005fc                DMA4_IRQHandler
+ .text.DMA5_IRQHandler
+                0x00000608        0xc startup/startup_MK64F12.o
+                0x00000608                DMA5_IRQHandler
+ .text.DMA6_IRQHandler
+                0x00000614        0xc startup/startup_MK64F12.o
+                0x00000614                DMA6_IRQHandler
+ .text.DMA7_IRQHandler
+                0x00000620        0xc startup/startup_MK64F12.o
+                0x00000620                DMA7_IRQHandler
+ .text.DMA8_IRQHandler
+                0x0000062c        0xc startup/startup_MK64F12.o
+                0x0000062c                DMA8_IRQHandler
+ .text.DMA9_IRQHandler
+                0x00000638        0xc startup/startup_MK64F12.o
+                0x00000638                DMA9_IRQHandler
+ .text.DMA10_IRQHandler
+                0x00000644        0xc startup/startup_MK64F12.o
+                0x00000644                DMA10_IRQHandler
+ .text.DMA11_IRQHandler
+                0x00000650        0xc startup/startup_MK64F12.o
+                0x00000650                DMA11_IRQHandler
+ .text.DMA12_IRQHandler
+                0x0000065c        0xc startup/startup_MK64F12.o
+                0x0000065c                DMA12_IRQHandler
+ .text.DMA13_IRQHandler
+                0x00000668        0xc startup/startup_MK64F12.o
+                0x00000668                DMA13_IRQHandler
+ .text.DMA14_IRQHandler
+                0x00000674        0xc startup/startup_MK64F12.o
+                0x00000674                DMA14_IRQHandler
+ .text.DMA15_IRQHandler
+                0x00000680        0xc startup/startup_MK64F12.o
+                0x00000680                DMA15_IRQHandler
+ .text.DMA_Error_IRQHandler
+                0x0000068c        0xc startup/startup_MK64F12.o
+                0x0000068c                DMA_Error_IRQHandler
+ .text.MCM_IRQHandler
+                0x00000698        0xc startup/startup_MK64F12.o
+                0x00000698                MCM_IRQHandler
+ .text.FTFE_IRQHandler
+                0x000006a4        0xc startup/startup_MK64F12.o
+                0x000006a4                FTFE_IRQHandler
+ .text.Read_Collision_IRQHandler
+                0x000006b0        0xc startup/startup_MK64F12.o
+                0x000006b0                Read_Collision_IRQHandler
+ .text.LVD_LVW_IRQHandler
+                0x000006bc        0xc startup/startup_MK64F12.o
+                0x000006bc                LVD_LVW_IRQHandler
+ .text.LLWU_IRQHandler
+                0x000006c8        0xc startup/startup_MK64F12.o
+                0x000006c8                LLWU_IRQHandler
+ .text.WDOG_EWM_IRQHandler
+                0x000006d4        0xc startup/startup_MK64F12.o
+                0x000006d4                WDOG_EWM_IRQHandler
+ .text.RNG_IRQHandler
+                0x000006e0        0xc startup/startup_MK64F12.o
+                0x000006e0                RNG_IRQHandler
+ .text.I2C0_IRQHandler
+                0x000006ec        0xc startup/startup_MK64F12.o
+                0x000006ec                I2C0_IRQHandler
+ .text.I2C1_IRQHandler
+                0x000006f8        0xc startup/startup_MK64F12.o
+                0x000006f8                I2C1_IRQHandler
+ .text.SPI0_IRQHandler
+                0x00000704        0xc startup/startup_MK64F12.o
+                0x00000704                SPI0_IRQHandler
+ .text.SPI1_IRQHandler
+                0x00000710        0xc startup/startup_MK64F12.o
+                0x00000710                SPI1_IRQHandler
+ .text.I2S0_Tx_IRQHandler
+                0x0000071c        0xc startup/startup_MK64F12.o
+                0x0000071c                I2S0_Tx_IRQHandler
+ .text.I2S0_Rx_IRQHandler
+                0x00000728        0xc startup/startup_MK64F12.o
+                0x00000728                I2S0_Rx_IRQHandler
+ .text.UART0_LON_IRQHandler
+                0x00000734        0xc startup/startup_MK64F12.o
+                0x00000734                UART0_LON_IRQHandler
+ .text.UART0_RX_TX_IRQHandler
+                0x00000740        0xc startup/startup_MK64F12.o
+                0x00000740                UART0_RX_TX_IRQHandler
+ .text.UART0_ERR_IRQHandler
+                0x0000074c        0xc startup/startup_MK64F12.o
+                0x0000074c                UART0_ERR_IRQHandler
+ .text.UART1_RX_TX_IRQHandler
+                0x00000758        0xc startup/startup_MK64F12.o
+                0x00000758                UART1_RX_TX_IRQHandler
+ .text.UART1_ERR_IRQHandler
+                0x00000764        0xc startup/startup_MK64F12.o
+                0x00000764                UART1_ERR_IRQHandler
+ .text.UART2_RX_TX_IRQHandler
+                0x00000770        0xc startup/startup_MK64F12.o
+                0x00000770                UART2_RX_TX_IRQHandler
+ .text.UART2_ERR_IRQHandler
+                0x0000077c        0xc startup/startup_MK64F12.o
+                0x0000077c                UART2_ERR_IRQHandler
+ .text.UART3_RX_TX_IRQHandler
+                0x00000788        0xc startup/startup_MK64F12.o
+                0x00000788                UART3_RX_TX_IRQHandler
+ .text.UART3_ERR_IRQHandler
+                0x00000794        0xc startup/startup_MK64F12.o
+                0x00000794                UART3_ERR_IRQHandler
+ .text.ADC0_IRQHandler
+                0x000007a0        0xc startup/startup_MK64F12.o
+                0x000007a0                ADC0_IRQHandler
+ .text.CMP0_IRQHandler
+                0x000007ac        0xc startup/startup_MK64F12.o
+                0x000007ac                CMP0_IRQHandler
+ .text.CMP1_IRQHandler
+                0x000007b8        0xc startup/startup_MK64F12.o
+                0x000007b8                CMP1_IRQHandler
+ .text.FTM0_IRQHandler
+                0x000007c4        0xc startup/startup_MK64F12.o
+                0x000007c4                FTM0_IRQHandler
+ .text.FTM1_IRQHandler
+                0x000007d0        0xc startup/startup_MK64F12.o
+                0x000007d0                FTM1_IRQHandler
+ .text.FTM2_IRQHandler
+                0x000007dc        0xc startup/startup_MK64F12.o
+                0x000007dc                FTM2_IRQHandler
+ .text.CMT_IRQHandler
+                0x000007e8        0xc startup/startup_MK64F12.o
+                0x000007e8                CMT_IRQHandler
+ .text.RTC_IRQHandler
+                0x000007f4        0xc startup/startup_MK64F12.o
+                0x000007f4                RTC_IRQHandler
+ .text.RTC_Seconds_IRQHandler
+                0x00000800        0xc startup/startup_MK64F12.o
+                0x00000800                RTC_Seconds_IRQHandler
+ .text.PIT0_IRQHandler
+                0x0000080c        0xc startup/startup_MK64F12.o
+                0x0000080c                PIT0_IRQHandler
+ .text.PIT1_IRQHandler
+                0x00000818        0xc startup/startup_MK64F12.o
+                0x00000818                PIT1_IRQHandler
+ .text.PIT2_IRQHandler
+                0x00000824        0xc startup/startup_MK64F12.o
+                0x00000824                PIT2_IRQHandler
+ .text.PIT3_IRQHandler
+                0x00000830        0xc startup/startup_MK64F12.o
+                0x00000830                PIT3_IRQHandler
+ .text.PDB0_IRQHandler
+                0x0000083c        0xc startup/startup_MK64F12.o
+                0x0000083c                PDB0_IRQHandler
+ .text.USB0_IRQHandler
+                0x00000848        0xc startup/startup_MK64F12.o
+                0x00000848                USB0_IRQHandler
+ .text.USBDCD_IRQHandler
+                0x00000854        0xc startup/startup_MK64F12.o
+                0x00000854                USBDCD_IRQHandler
+ .text.Reserved71_IRQHandler
+                0x00000860        0xc startup/startup_MK64F12.o
+                0x00000860                Reserved71_IRQHandler
+ .text.DAC0_IRQHandler
+                0x0000086c        0xc startup/startup_MK64F12.o
+                0x0000086c                DAC0_IRQHandler
+ .text.MCG_IRQHandler
+                0x00000878        0xc startup/startup_MK64F12.o
+                0x00000878                MCG_IRQHandler
+ .text.LPTMR0_IRQHandler
+                0x00000884        0xc startup/startup_MK64F12.o
+                0x00000884                LPTMR0_IRQHandler
+ .text.PORTA_IRQHandler
+                0x00000890        0xc startup/startup_MK64F12.o
+                0x00000890                PORTA_IRQHandler
+ .text.PORTB_IRQHandler
+                0x0000089c        0xc startup/startup_MK64F12.o
+                0x0000089c                PORTB_IRQHandler
+ .text.PORTC_IRQHandler
+                0x000008a8        0xc startup/startup_MK64F12.o
+                0x000008a8                PORTC_IRQHandler
+ .text.PORTD_IRQHandler
+                0x000008b4        0xc startup/startup_MK64F12.o
+                0x000008b4                PORTD_IRQHandler
+ .text.PORTE_IRQHandler
+                0x000008c0        0xc startup/startup_MK64F12.o
+                0x000008c0                PORTE_IRQHandler
+ .text.SWI_IRQHandler
+                0x000008cc        0xc startup/startup_MK64F12.o
+                0x000008cc                SWI_IRQHandler
+ .text.SPI2_IRQHandler
+                0x000008d8        0xc startup/startup_MK64F12.o
+                0x000008d8                SPI2_IRQHandler
+ .text.UART4_RX_TX_IRQHandler
+                0x000008e4        0xc startup/startup_MK64F12.o
+                0x000008e4                UART4_RX_TX_IRQHandler
+ .text.UART4_ERR_IRQHandler
+                0x000008f0        0xc startup/startup_MK64F12.o
+                0x000008f0                UART4_ERR_IRQHandler
+ .text.UART5_RX_TX_IRQHandler
+                0x000008fc        0xc startup/startup_MK64F12.o
+                0x000008fc                UART5_RX_TX_IRQHandler
+ .text.UART5_ERR_IRQHandler
+                0x00000908        0xc startup/startup_MK64F12.o
+                0x00000908                UART5_ERR_IRQHandler
+ .text.CMP2_IRQHandler
+                0x00000914        0xc startup/startup_MK64F12.o
+                0x00000914                CMP2_IRQHandler
+ .text.FTM3_IRQHandler
+                0x00000920        0xc startup/startup_MK64F12.o
+                0x00000920                FTM3_IRQHandler
+ .text.DAC1_IRQHandler
+                0x0000092c        0xc startup/startup_MK64F12.o
+                0x0000092c                DAC1_IRQHandler
+ .text.ADC1_IRQHandler
+                0x00000938        0xc startup/startup_MK64F12.o
+                0x00000938                ADC1_IRQHandler
+ .text.I2C2_IRQHandler
+                0x00000944        0xc startup/startup_MK64F12.o
+                0x00000944                I2C2_IRQHandler
+ .text.CAN0_ORed_Message_buffer_IRQHandler
+                0x00000950        0xc startup/startup_MK64F12.o
+                0x00000950                CAN0_ORed_Message_buffer_IRQHandler
+ .text.CAN0_Bus_Off_IRQHandler
+                0x0000095c        0xc startup/startup_MK64F12.o
+                0x0000095c                CAN0_Bus_Off_IRQHandler
+ .text.CAN0_Error_IRQHandler
+                0x00000968        0xc startup/startup_MK64F12.o
+                0x00000968                CAN0_Error_IRQHandler
+ .text.CAN0_Tx_Warning_IRQHandler
+                0x00000974        0xc startup/startup_MK64F12.o
+                0x00000974                CAN0_Tx_Warning_IRQHandler
+ .text.CAN0_Rx_Warning_IRQHandler
+                0x00000980        0xc startup/startup_MK64F12.o
+                0x00000980                CAN0_Rx_Warning_IRQHandler
+ .text.CAN0_Wake_Up_IRQHandler
+                0x0000098c        0xc startup/startup_MK64F12.o
+                0x0000098c                CAN0_Wake_Up_IRQHandler
+ .text.SDHC_IRQHandler
+                0x00000998        0xc startup/startup_MK64F12.o
+                0x00000998                SDHC_IRQHandler
+ .text.ENET_1588_Timer_IRQHandler
+                0x000009a4        0xc startup/startup_MK64F12.o
+                0x000009a4                ENET_1588_Timer_IRQHandler
+ .text.ENET_Transmit_IRQHandler
+                0x000009b0        0xc startup/startup_MK64F12.o
+                0x000009b0                ENET_Transmit_IRQHandler
+ .text.ENET_Receive_IRQHandler
+                0x000009bc        0xc startup/startup_MK64F12.o
+                0x000009bc                ENET_Receive_IRQHandler
+ .text.ENET_Error_IRQHandler
+                0x000009c8        0xc startup/startup_MK64F12.o
+                0x000009c8                ENET_Error_IRQHandler
+ *(.rodata*)
+                0x000009d4                . = ALIGN (0x4)
+
+.glue_7         0x000009d4        0x0
+ .glue_7        0x000009d4        0x0 linker stubs
+
+.glue_7t        0x000009d4        0x0
+ .glue_7t       0x000009d4        0x0 linker stubs
+
+.vfp11_veneer   0x000009d4        0x0
+ .vfp11_veneer  0x000009d4        0x0 linker stubs
+
+.v4_bx          0x000009d4        0x0
+ .v4_bx         0x000009d4        0x0 linker stubs
+
+.iplt           0x000009d4        0x0
+ .iplt          0x000009d4        0x0 src/main.o
+
+.rel.dyn        0x000009d4        0x0
+ .rel.iplt      0x000009d4        0x0 src/main.o
+
+.data_section_table
+                0x000009d4        0xc
+                0x000009d4                . = ALIGN (0x4)
+                0x000009d4                __data_section_table = .
+                0x000009d4        0x4 LONG 0x9e8 LOADADDR (.data)
+                0x000009d8        0x4 LONG 0x1fff0000 ADDR (.data)
+                0x000009dc        0x4 LONG 0x0 SIZEOF (.data)
+                0x000009e0                __data_section_table_end = .
+
+.bss_section_table
+                0x000009e0        0x8
+                0x000009e0                . = ALIGN (0x4)
+                0x000009e0                __bss_section_table = .
+                0x000009e0        0x4 LONG 0x1fff0000 ADDR (.bss)
+                0x000009e4        0x4 LONG 0x0 SIZEOF (.bss)
+                0x000009e8                __bss_section_table_end = .
+
+.data           0x1fff0000        0x0 load address 0x000009e8
+                0x1fff0000                . = ALIGN (0x4)
+ *(.data*)
+                0x1fff0000                . = ALIGN (0x4)
+
+.igot.plt       0x1fff0000        0x0 load address 0x000009e8
+ .igot.plt      0x1fff0000        0x0 src/main.o
+
+.bss            0x1fff0000        0x0 load address 0x000009e8
+                0x1fff0000                . = ALIGN (0x4)
+ *(.bss*)
+ *(COMMON)
+                0x1fff0000                . = ALIGN (0x4)
+OUTPUT(tamgaos.elf elf32-littlearm)
+LOAD linker stubs
+
+.debug_info     0x00000000      0xa1a
+ .debug_info    0x00000000       0xbf src/main.o
+ .debug_info    0x000000bf      0x95b startup/startup_MK64F12.o
+
+.debug_abbrev   0x00000000      0x207
+ .debug_abbrev  0x00000000       0x85 src/main.o
+ .debug_abbrev  0x00000085      0x182 startup/startup_MK64F12.o
+
+.debug_aranges  0x00000000      0x358
+ .debug_aranges
+                0x00000000       0x28 src/main.o
+ .debug_aranges
+                0x00000028      0x330 startup/startup_MK64F12.o
+
+.debug_ranges   0x00000000      0x338
+ .debug_ranges  0x00000000       0x18 src/main.o
+ .debug_ranges  0x00000018      0x320 startup/startup_MK64F12.o
+
+.debug_line     0x00000000      0xac8
+ .debug_line    0x00000000      0x110 src/main.o
+ .debug_line    0x00000110      0x9b8 startup/startup_MK64F12.o
+
+.debug_str      0x00000000      0x924
+ .debug_str     0x00000000      0x144 src/main.o
+                                0x181 (size before relaxing)
+ .debug_str     0x00000144      0x7e0 startup/startup_MK64F12.o
+                                0x8d5 (size before relaxing)
+
+.comment        0x00000000       0x49
+ .comment       0x00000000       0x49 src/main.o
+                                 0x4a (size before relaxing)
+ .comment       0x00000049       0x4a startup/startup_MK64F12.o
+
+.ARM.attributes
+                0x00000000       0x34
+ .ARM.attributes
+                0x00000000       0x34 src/main.o
+ .ARM.attributes
+                0x00000034       0x34 startup/startup_MK64F12.o
+
+.debug_frame    0x00000000      0xb1c
+ .debug_frame   0x00000000       0x54 src/main.o
+ .debug_frame   0x00000054      0xac8 startup/startup_MK64F12.o
