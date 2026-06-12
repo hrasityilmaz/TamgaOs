@@ -37,7 +37,7 @@ LDFLAGS += -nostartfiles
 # C_SRCS   = src/main.c startup/startup_MK64F12.c
 
 #MINE
-C_SRCS   = src/main.c src/uart.c
+C_SRCS   = src/main.c
 AS_SRCS  = startup/startup_k64f.S
 
 # Object files
@@ -67,11 +67,11 @@ $(TARGET).hex: $(TARGET).elf
 %.o: %.S
 	$(AS) $(ASFLAGS) -c $< -o $@
 
-# Flash'a yaz (pyocd kullanılıyor)
+# Flash'a yaz (OpenSDA - sürücü harfini değiştir)
 flash: $(TARGET).bin
-	pyocd flash -t k64f $(TARGET).bin
+	cp $(TARGET).bin /d/
 
 clean:
-	powershell -Command "'$(OBJS) $(TARGET).elf $(TARGET).bin $(TARGET).hex $(TARGET).map' -split ' ' | ForEach-Object { Remove-Item -ErrorAction SilentlyContinue -Force $$_ }"
+	rm -f $(OBJS) $(TARGET).elf $(TARGET).bin $(TARGET).hex $(TARGET).map
 
 .PHONY: all flash clean
