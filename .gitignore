@@ -1,5 +1,8 @@
 *.exe
 *.pdb
+*.bin
+*.elf
+*.map
 *.o
 .zig-cache/
 zig-out/
