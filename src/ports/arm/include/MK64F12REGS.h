@@ -166,4 +166,5 @@ typedef struct
 #define UART_BDH_SBR_WIDTH     (5U)
 #define UART_BDH_SBR_MASK      (((1UL << UART_BDH_SBR_WIDTH) - 1UL) << UART_BDH_SBR_SHIFT)
 
+
 #endif
