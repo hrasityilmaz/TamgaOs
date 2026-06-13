@@ -1,35 +1,26 @@
-#include <stdint.h>
+#include "mmio_deviation.h"
+#include "uart.h"
 
-// Here for now ı will use NXP-K64F ı have this card for now for ARM-CORTEX M4
-// Later STMs also ı will add ı hope (I dont have money :) )
-//
-
-#define SIM_SCGC5 (*(volatile uint32_t *)0x40048038)
-#define SIM_SCGC5_PORTB (1U << 10) // set portB clock bit
-
-#define PORTB_PCR22 (*(volatile uint32_t *)0x4004A058)
-#define PORT_PCR_MUX_GPIO (1U << 8);
-
-#define GPIOB_PDDR (*(volatile uint32_t *)0x400FF054)
-#define GPIOB_PTOR (*(volatile uint32_t *)0x400FF04C)
-#define LED_RED_PIN (1U << 22)
+#define LED_RED_PIN_SHIFT (22U)
+#define LED_RED_PIN_MASK (1UL << LED_RED_PIN_SHIFT) /* PTB22 */
+#define LED_DELAY_COUNT (500000UL)
 
 static void delay(volatile uint32_t n) {
-  while (n--)
-    ;
+  while (n != 0U) {
+    n--;
+  }
 }
 
 int main(void) {
-  SIM_SCGC5 |= SIM_SCGC5_PORTB;
-
-  PORTB_PCR22 = PORT_PCR_MUX_GPIO;
-
-  GPIOB_PDDR |= LED_RED_PIN;
+  SIM->SCGC5 |= SIM_SCGC5_PORTB_MASK;               /* Clock */
+  PORTB->PCR[LED_RED_PIN_SHIFT] = PORT_PCR_MUX(1U); /* GPIO */
+  GPIOB->PDDR |= LED_RED_PIN_MASK;                  /* Output */
+  uart0_init(115200U);
+  uart0_puts("TamgaOS boot!\n");
 
   while (1) {
-    GPIOB_PTOR = LED_RED_PIN;
-    delay(500000);
+    GPIOB->PTOR = LED_RED_PIN_MASK;
+    delay(LED_DELAY_COUNT);
+    uart0_puts("TamgaOS tick!\n");
   }
-
-  return 0;
 }
