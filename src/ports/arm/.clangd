@@ -1,0 +1,5 @@
+CompileFlags:
+  Remove:
+    - -I/usr/lib/gcc/x86_64-linux-gnu/13/include
+    - -I/usr/include
+    - -I/usr/local/include
