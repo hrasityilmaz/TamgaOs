@@ -6,7 +6,7 @@ MEMORY
   RAM   (rwx) : ORIGIN = 0x1FFF0000, LENGTH = 256K
 }
 
-_stack_top = ORIGIN(RAM) + LENGTH(RAM);
+_stack_top = ORIGIN(RAM) + LENGTH(RAM) & ~7; /* AAPCS  Make guarantee 8 bit align ... */
 
 SECTIONS
 {
@@ -28,8 +28,6 @@ SECTIONS
     . = ALIGN(4);
   } > FLASH
 
-  _data_load = LOADADDR(.data);
-
   .data :
   {
     . = ALIGN(4);
@@ -38,6 +36,8 @@ SECTIONS
     _data_end = .;
   } > RAM AT > FLASH
 
+  _data_load = LOADADDR(.data); /*probably was drunk :(*/
+  
   .bss :
   {
     . = ALIGN(4);

@@ -38,7 +38,7 @@ LDFLAGS += -nostartfiles
 
 #MINE
 C_SRCS   = src/main.c src/uart.c
-AS_SRCS  = startup/startup_k64f.S
+AS_SRCS  = startup/startup_k64f.s
 
 # Object files
 C_OBJS   = $(C_SRCS:.c=.o)
