@@ -25,7 +25,7 @@ _vectors:
         .word  Default_Handler  // DebugMon
         .word  0
         .word  Default_Handler  // PendSV
-        .word  Default_Handler  // SysTick
+        .word  SysTick_Handler  // SysTick
 
 // --------------------------------------------------------
 // Flash Configuration Block (0x400)
