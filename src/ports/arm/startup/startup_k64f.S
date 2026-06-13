@@ -1,3 +1,4 @@
+
 .syntax unified
         .cpu    cortex-m4
         .thumb
@@ -27,11 +28,17 @@ _vectors:
         .word  Default_Handler  // PendSV
         .word  SysTick_Handler  // SysTick
 
-// --------------------------------------------------------
+// -----------------------------------------------------------------------------
 // Flash Configuration Block (0x400)
 // Must be at 0x400 - chip reads this on every boot!
 // Last word 0xFFFFFFFE = unsecured, otherwise chip locks itself
-// --------------------------------------------------------
+// For development here stay unsecured .. for relase MUST BE secure (MY OPINION)
+// if backdoor key empty and SEC bit is set you cant access device !!!
+// for nxp this part must be unsecured or secured...
+// If no flashconfig no error on comppile and upload time
+// but later MCU CAN CRASH!!!
+// TODO: LOCATION CAN BE WRONG MAYBE BY CHANCE VALID CHECK HERE!!!! 
+// ------------------------------------------------------------------------------
         .section .FlashConfig, "a", %progbits
         .align 2
         .word 0xFFFFFFFF   // Backdoor key 0-3
