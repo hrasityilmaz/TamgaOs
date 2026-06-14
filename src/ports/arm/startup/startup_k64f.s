@@ -61,11 +61,15 @@ Reset_Handler:
         strh r1, [r0]
         ldr  r1, =0xD928
         strh r1, [r0]
+		nop
+		nop
         // Disable watchdog: write to WDOG_STCTRLH (0x40052000)
         ldr  r0, =0x40052000
         ldr  r1, =0x01D2
         strh r1, [r0]
-
+		nop
+		nop
+		nop
         // Copy .data from flash to RAM
         ldr  r0, =_data_load
         ldr  r1, =_data_start
