@@ -42,7 +42,7 @@ AS_SRCS  = startup/startup_k64f.s
 
 # Object files
 C_OBJS   = $(C_SRCS:.c=.o)
-AS_OBJS  = $(AS_SRCS:.S=.o)
+AS_OBJS  = $(AS_SRCS:.s=.o)
 OBJS     = $(AS_OBJS) $(C_OBJS)
 
 # -------------------------------------------------- #
@@ -64,7 +64,7 @@ $(TARGET).hex: $(TARGET).elf
 	$(CC) $(CFLAGS) -c $< -o $@
 
 # Assembly derleme
-%.o: %.S
+%.o: %.s
 	$(AS) $(ASFLAGS) -c $< -o $@
 
 # Flash'a yaz (pyocd kullanılıyor)
