@@ -6,7 +6,7 @@ MEMORY
   RAM   (rwx) : ORIGIN = 0x1FFF0000, LENGTH = 256K
 }
 
-_stack_top = ORIGIN(RAM) + LENGTH(RAM) & ~7; /* AAPCS  Make guarantee 8 bit align ... */
+_stack_top = ORIGIN(RAM) + LENGTH(RAM) & ~7; /* AAPCS  Make guarantee 8 bytes align ... */
 
 SECTIONS
 {
