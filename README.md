@@ -12,7 +12,7 @@ The project is still in an early experimental stage. The goal is to understand t
 
 ## Current status
 
-Features currently implemented:
+Features currently implemented:  
 **For x86:**
 * Basic Global Descriptor Table (GDT) setup
 * Basic GDI
@@ -21,7 +21,7 @@ Features currently implemented:
 * ISO generation through xorriso
 
 **For Arm**  
-Currently working on NXP-K64F board (Cotext-m4)  
+Currently working on NXP-K64F board (Cotex-m4)  
 **For arm currently only with C/assembly later ı will implement Zig**
 
  * StartupFile  
