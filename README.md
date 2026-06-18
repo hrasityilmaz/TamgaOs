@@ -13,10 +13,25 @@ The project is still in an early experimental stage. The goal is to understand t
 ## Current status
 
 Features currently implemented:
-
+**For x86:**
 * Basic Global Descriptor Table (GDT) setup
+* Basic GDI
+* Serial Monitor
 * Zig and C kernel implementations for comparison
 * ISO generation through xorriso
+
+**For Arm**  
+Currently working on NXP-K64F board (Cotext-m4)  
+**For arm currently only with C/assembly later ı will implement Zig**
+
+ * StartupFile  
+ * linker.ld  
+ * systemtick  
+ * uart  
+ * uart  
+ * mcg  
+
+**Later will add Cortex-M7 port also (STM32H7)**  
   
 Both Zig and C versions successfully boot through **Limine** using a **Multiboot2** header.
 
