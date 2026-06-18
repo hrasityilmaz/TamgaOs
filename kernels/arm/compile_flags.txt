@@ -7,3 +7,5 @@
 -fno-builtin
 -nostdlib
 -Iinclude
+-Iboards/k64f
+-Idrivers/k64f
