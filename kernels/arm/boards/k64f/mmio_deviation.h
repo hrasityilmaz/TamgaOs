@@ -61,6 +61,8 @@
 #define GPIOC_BASE_ADDR (0x400FF080UL)
 #define GPIOD_BASE_ADDR (0x400FF0C0UL)
 #define GPIOE_BASE_ADDR (0x400FF100UL)
+#define MCG_BASE_ADDR (0x40064000UL)
+#define ENET_BASE_ADDR (0x400C0000UL)
 
 /* MISRA 11.4 deviation applied below — see header comment */
 #define SIM ((SIM_Type *)(SIM_BASE_ADDR))
@@ -77,8 +79,13 @@
 #define GPIOC ((GPIO_Type *)(GPIOC_BASE_ADDR))
 #define GPIOD ((GPIO_Type *)(GPIOD_BASE_ADDR))
 #define GPIOE ((GPIO_Type *)(GPIOE_BASE_ADDR))
+#define MCG ((MCG_Type *)(MCG_BASE_ADDR))
+#define ENET ((ENET_Type *)(ENET_BASE_ADDR)) /* YENİ: ENET pointer */
 
 #define SYSTICK_BASE_ADDR (0xE000E010UL)
 #define SYSTICK ((SysTick_Type *)(SYSTICK_BASE_ADDR))
+
+#define PIT_BASE_ADDR (0x40037000UL)
+#define PIT ((PIT_Type *)(PIT_BASE_ADDR))
 
 #endif /* MMIO_DEVIATION_H */
