@@ -3,6 +3,7 @@
 *.bin
 *.elf
 *.map
+*.hex
 *.o
 .zig-cache/
 zig-out/
