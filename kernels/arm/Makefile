@@ -1,7 +1,6 @@
 TARGET = tamgaos
 
-# Usage: make BOARD=k64f   (default)
-#        make BOARD=bluepill
+#make BOARD=k64f   (default)...
 BOARD ?= k64f
 
 CC      = arm-none-eabi-gcc
@@ -9,7 +8,6 @@ AS      = arm-none-eabi-gcc
 OBJCOPY = arm-none-eabi-objcopy
 SIZE    = arm-none-eabi-size
 
-# Board-specific settings (CPU_FLAGS, STARTUP, LDSCRIPT, BOARD_DEFINE...)
 include boards/$(BOARD)/board.mk
 
 # C flags
@@ -23,18 +21,16 @@ CFLAGS += -Iinclude
 CFLAGS += -Iboards/$(BOARD)
 CFLAGS += -D$(BOARD_DEFINE)
 
-# Assembler flags
 ASFLAGS  = $(CPU_FLAGS)
 ASFLAGS += -g
 
-# Linker flags
 LDFLAGS  = -T $(LDSCRIPT)
 LDFLAGS += -Wl,--gc-sections
 LDFLAGS += -Wl,-Map=$(TARGET)_$(BOARD).map
 LDFLAGS += -nostartfiles
 
 # Sources
-C_SRCS   = src/main.c drivers/$(BOARD)/uart.c
+C_SRCS   = src/main.c  drivers/$(BOARD)/uart.c drivers/$(BOARD)/mcg.c  drivers/$(BOARD)/pit.c
 AS_SRCS  = $(STARTUP)
 
 C_OBJS   = $(C_SRCS:.c=.o)
