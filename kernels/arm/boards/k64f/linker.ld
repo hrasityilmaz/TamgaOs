@@ -6,21 +6,25 @@ MEMORY
   RAM   (rwx) : ORIGIN = 0x1FFF0000, LENGTH = 256K
 }
 
-_stack_top = ORIGIN(RAM) + LENGTH(RAM) & ~7; /* AAPCS  Make guarantee 8 bytes align ... */
+_stack_top = ORIGIN(RAM) + LENGTH(RAM) & ~7;
 
 SECTIONS
 {
+  /* Vector table - 0x00000000 */
   .vectors :
   {
     KEEP(*(.vectors))
   } > FLASH
 
-  .FlashConfig 0x400 :
+  /* Flash Configuration Field
+  * Must be at 0x400, K64F RM Chapter 28
+  */
+  .flashconfig 0x00000400 :
   {
-    . = ALIGN(4);
-    KEEP(*(.FlashConfig))
+    KEEP(*(.flashconfig))
   } > FLASH
 
+  /* Code and read-only data */
   .text :
   {
     *(.text*)
@@ -28,6 +32,7 @@ SECTIONS
     . = ALIGN(4);
   } > FLASH
 
+  /* Initialized data - copied from FLASH to RAM */
   .data :
   {
     . = ALIGN(4);
@@ -36,8 +41,8 @@ SECTIONS
     _data_end = .;
   } > RAM AT > FLASH
 
-  _data_load = LOADADDR(.data); /*probably was drunk :(*/
-  
+  _data_load = LOADADDR(.data); /* must be after daat 1!!!! */
+
   .bss :
   {
     . = ALIGN(4);
