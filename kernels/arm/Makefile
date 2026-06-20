@@ -30,8 +30,8 @@ LDFLAGS += -Wl,-Map=$(TARGET)_$(BOARD).map
 LDFLAGS += -nostartfiles
 
 # Sources
-C_SRCS   = src/main.c  drivers/$(BOARD)/uart.c drivers/$(BOARD)/mcg.c  drivers/$(BOARD)/pit.c
-AS_SRCS  = $(STARTUP)
+C_SRCS   += src/main.c  drivers/$(BOARD)/uart.c drivers/$(BOARD)/mcg.c  drivers/$(BOARD)/pit.c
+AS_SRCS  += $(STARTUP)
 
 C_OBJS   = $(C_SRCS:.c=.o)
 AS_OBJS  = $(AS_SRCS:.s=.o)
