@@ -20,7 +20,7 @@ _vectors:
     .word  Default_Handler      /* 11 SVC                  */
     .word  Default_Handler      /* 12 DebugMon             */
     .word  0                    /* 13 Reserved             */
-    .word  Default_Handler      /* 14 PendSV               */
+    .word  PendSV_Handler       /* 14 PendSV               */
     .word  SysTick_Handler      /* 15 SysTick              */
 
     /* Peripheral IRQs (IRQ0 - IRQ47) */
