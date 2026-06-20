@@ -10,3 +10,6 @@ BOARD_DEFINE = BOARD_K64F
 
 CPU_FLAGS += -DCORE_CLOCK_HZ=120000000UL
 #CPU_FLAGS += -DUSE_PLL
+
+C_SRCS += kernel/scheduler.c
+AS_SRCS += kernel/arch/cortex_m4/pendsv_handler.s
