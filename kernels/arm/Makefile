@@ -36,7 +36,6 @@ AS_SRCS  = $(STARTUP)
 C_OBJS   = $(C_SRCS:.c=.o)
 AS_OBJS  = $(AS_SRCS:.s=.o)
 OBJS     = $(AS_OBJS) $(C_OBJS)
-
 # -------------------------------------------------- #
 
 all: $(TARGET)_$(BOARD).bin $(TARGET)_$(BOARD).hex
