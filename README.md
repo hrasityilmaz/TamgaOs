@@ -28,7 +28,6 @@ Currently working on NXP-K64F board (Cotex-m4)
  * linker.ld  
  * systemtick  
  * uart  
- * uart  
  * mcg  
 
 **Later will add Cortex-M7 port also (STM32H7)**  
