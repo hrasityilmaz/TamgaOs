@@ -1,6 +1,5 @@
 TARGET = tamgaos
 
-#make BOARD=k64f   (default)...
 BOARD ?= k64f
 
 CC      = arm-none-eabi-gcc
@@ -10,7 +9,6 @@ SIZE    = arm-none-eabi-size
 
 include boards/$(BOARD)/board.mk
 
-# C flags
 CFLAGS  = $(CPU_FLAGS)
 CFLAGS += -O0 -g
 CFLAGS += -Wall -Wextra
@@ -25,18 +23,15 @@ ASFLAGS  = $(CPU_FLAGS)
 ASFLAGS += -g
 
 LDFLAGS  = -T $(LDSCRIPT)
-LDFLAGS += -Wl,--gc-sections
 LDFLAGS += -Wl,-Map=$(TARGET)_$(BOARD).map
 LDFLAGS += -nostartfiles
 
-# Sources
-C_SRCS   += src/main.c  drivers/$(BOARD)/uart.c drivers/$(BOARD)/mcg.c  drivers/$(BOARD)/pit.c
-AS_SRCS  += $(STARTUP)
+C_SRCS  += src/main.c
+AS_SRCS += $(STARTUP)
 
 C_OBJS   = $(C_SRCS:.c=.o)
 AS_OBJS  = $(AS_SRCS:.s=.o)
 OBJS     = $(AS_OBJS) $(C_OBJS)
-# -------------------------------------------------- #
 
 all: $(TARGET)_$(BOARD).bin $(TARGET)_$(BOARD).hex
 	$(SIZE) $(TARGET)_$(BOARD).elf
