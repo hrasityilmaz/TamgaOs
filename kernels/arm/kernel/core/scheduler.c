@@ -127,6 +127,7 @@ void sched_delay_ms(uint32_t ms) {
   g_next_task = sched_select_next();
   sched_critical_exit(p);
   trigger_pendsv();
+  __asm volatile("dsb");
   __asm volatile("isb");
 }
 
@@ -147,12 +148,22 @@ void sched_task_resume(uint8_t index) {
   sched_critical_exit(p);
 }
 
+void sched_yield(void) {
+  uint32_t p = sched_critical_enter();
+  if (g_current_task != NULL) {
+    g_current_task->state = TASK_READY;
+    g_next_task = sched_select_next();
+  }
+  sched_critical_exit(p);
+  trigger_pendsv();
+  __asm volatile("dsb");
+  __asm volatile("isb");
+}
+
 void sched_start(void) {
   g_current_task = sched_select_next();
   g_next_task = g_current_task;
   g_current_task->state = TASK_RUNNING;
-  /* Direkt task fonksiyonunu cagir - PSP gecisi sched_start_asm ile */
-  extern void sched_start_asm(task_t * task);
   sched_start_asm(g_current_task);
   while (1) {
   }
