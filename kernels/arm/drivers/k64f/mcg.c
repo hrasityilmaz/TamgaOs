@@ -28,7 +28,6 @@ void mcg_init_120mhz(void) {
   MCG->C2 = MCG_C2_RANGE0(2U) | MCG_C2_HGO0_MASK | MCG_C2_EREFS0_MASK;
   *(volatile uint8_t *)0x40065000U = 0x02U;
   mcg_delay(10000U);
-
   MCG->C1 = MCG_C1_IRCLKEN_MASK;
   *(volatile uint8_t *)0x40064008U = 0x01U;
   MCG->C5 = 14U;
@@ -38,20 +37,16 @@ void mcg_init_120mhz(void) {
 
   while (((MCG->S >> MCG_S_CLKST_SHIFT) & 0x3U) != 2U) {
   }
-
   MCG->C6 |= MCG_C6_PLLS_MASK;
-
   while ((MCG->S & MCG_S_PLLST_MASK) == 0U) {
+    /*WAIT*/
   }
-
   while ((MCG->S & MCG_S_LOCK0_MASK) == 0U) {
+    /*WAIT*/
   }
-
   MCG->C1 = (uint8_t)(MCG->C1 & (uint8_t)(~MCG_C1_CLKS_MASK));
-
   while (((MCG->S >> MCG_S_CLKST_SHIFT) & 0x3U) != 3U) {
   }
-
   SIM->SOPT2 = (SIM->SOPT2 & ~SIM_SOPT2_PLLFLLSEL_MASK) |
                SIM_SOPT2_PLLFLLSEL(SIM_SOPT2_PLLFLLSEL_MCGPLLCLK);
 }
