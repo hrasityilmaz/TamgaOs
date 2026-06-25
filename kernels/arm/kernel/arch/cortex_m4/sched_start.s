@@ -13,7 +13,7 @@ sched_start_asm:
     ldmia   r1!, {r4-r11}
     msr     psp, r1
     isb
-    mov     r0, #0x02
+    mov     r0, #2
     msr     control, r0
     isb
     cpsie   i
@@ -21,7 +21,7 @@ sched_start_asm:
     
     /* r1: R0(0),R1(4),R2(8),R3(12),R12(16),LR(20),PC(24),xPSR(28) */
     ldr     r2, [r1, #24]
-    bx      r2
+    bx      r2 /* bx lr !!!! */
 
 .size sched_start_asm, . - sched_start_asm
 .end
