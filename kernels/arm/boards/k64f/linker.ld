@@ -49,4 +49,13 @@ SECTIONS
     . = ALIGN(4);
     _bss_end = .;
   } > m_data_2
+  
+  .noinit (NOLOAD) :
+  {
+    . = ALIGN(4);
+    _noinit_start = .;
+    *(.noinit*)
+    . = ALIGN(4);
+    _noinit_end = .;
+  } > m_data_2
 }
