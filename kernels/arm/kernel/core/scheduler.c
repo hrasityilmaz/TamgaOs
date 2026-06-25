@@ -6,8 +6,8 @@
 task_t *volatile g_current_task;
 task_t *volatile g_next_task;
 
-static task_t s_tasks[TASK_MAX];
 static uint8_t s_task_count;
+static task_t s_tasks[TASK_MAX];
 static task_t s_idle_tcb;
 
 #define SCB_ICSR (*(volatile uint32_t *)0xE000ED04U)
@@ -121,14 +121,22 @@ void sched_tick(void) {
 void sched_delay_ms(uint32_t ms) {
   if (ms == 0U)
     return;
+
   uint32_t p = sched_critical_enter();
   g_current_task->delay_ticks = ms;
   g_current_task->state = TASK_BLOCKED;
   g_next_task = sched_select_next();
   sched_critical_exit(p);
+
   trigger_pendsv();
   __asm volatile("dsb");
   __asm volatile("isb");
+
+  /* delay_ticks adresini volatile pointer olarak tut */
+  volatile uint32_t *ticks = &(g_current_task->delay_ticks);
+  while (*ticks > 0U) {
+    __asm volatile("wfi");
+  }
 }
 
 void sched_task_pause(uint8_t index) {
