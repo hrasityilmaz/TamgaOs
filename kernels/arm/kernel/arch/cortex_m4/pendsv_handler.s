@@ -13,11 +13,9 @@
 PendSV_Handler:
     mrs     r0, psp
     isb
-
     ldr     r3, =g_current_task
     ldr     r2, [r3]
     cbz     r2, PendSV_restore
-
     stmdb   r0!, {r4-r11}
     str     r0, [r2, #0]
 
@@ -26,7 +24,7 @@ PendSV_restore:
     ldr     r2, [r3]    
     ldr     r3, =g_current_task
     str     r2, [r3]
-    ldr     r0, [r2, #0]  /*maybe problem is here...*/
+    ldr     r0, [r2, #0]
     ldmia   r0!, {r4-r11}
     msr     psp, r0
     isb
