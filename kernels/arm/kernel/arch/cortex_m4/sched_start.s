@@ -15,7 +15,7 @@ sched_start_asm:
     isb
     mov     r0, #2
     msr     control, r0
-    isb  # if pending interrupt
+    isb  /* if pending interrupt */
     cpsie   i
     isb
     
