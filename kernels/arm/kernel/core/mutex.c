@@ -31,13 +31,12 @@ static int mutex_try_acquire(mutex_t *m) {
 }
 
 void mutex_lock(mutex_t *m) {
-  if (m->task == g_current_task) {
-    return;
-  }
-
-  while (!mutex_try_acquire(m)) {
-    sched_yield();
-  }
+    if (m->task == g_current_task) {
+        return;
+    }
+    while (!mutex_try_acquire(m)) {
+        sched_delay_ms(1U);
+    }
 }
 
 void mutex_unlock(mutex_t *m) {
