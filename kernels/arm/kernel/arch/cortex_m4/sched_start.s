@@ -19,7 +19,7 @@ sched_start_asm:
     cpsie   i
     isb
     
-    /* r1: R0(0),R1(4),R2(8),R3(12),R12(16),LR(20),PC(24),xPSR(28) */:
+    /* r1: R0(0),R1(4),R2(8),R3(12),R12(16),LR(20),PC(24),xPSR(28) */
     /* mrs r1, psp  */       
     /* ldr r2, [r1, #24] */    
     ldr     r2, [r1, #24]
