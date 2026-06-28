@@ -132,7 +132,7 @@ void sched_delay_ms(uint32_t ms) {
   __asm volatile("dsb");
   __asm volatile("isb");
 
-  /* delay_ticks adresini volatile pointer olarak tut */
+  /* ticks MUST be volatile it was a bug !! */
   volatile uint32_t *ticks = &(g_current_task->delay_ticks);
   while (*ticks > 0U) {
     __asm volatile("wfi");
