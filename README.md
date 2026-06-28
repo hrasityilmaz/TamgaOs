@@ -1,7 +1,7 @@
 # TamgaOS (yula)
 
 
-![TamgaOS](images/Tamgaos_Rtos.mp4)  
+<video src="images/Tamgaos_Rtos.mp4" controls width="600"></video>  
 ![TamgaOS](images/tamgaos.gif)  
 
 
