@@ -1,13 +1,11 @@
 #include "mcg.h"
 #include "mmio_deviation.h"
+#include "mutex.h"
 #include "pit.h"
 #include "scheduler.h"
+#include "semaphore.h"
 #include "task.h"
 #include "uart.h"
-#include "mutex.h"
-#include "semaphore.h"
-
-
 
 #define LED_RED_PIN (1UL << 22U)
 #define LED_BLUE_PIN (1UL << 21U)
@@ -54,8 +52,8 @@ static void board_init(void) {
   GPIOB->PSOR = LED_RED_PIN;
   // blue
   PORTB->PCR[21] = PORT_PCR_MUX(1U);
-  GPIOB->PDDR   |= LED_BLUE_PIN;
-  GPIOB->PSOR    = LED_BLUE_PIN;
+  GPIOB->PDDR |= LED_BLUE_PIN;
+  GPIOB->PSOR = LED_BLUE_PIN;
 }
 
 static void task_led(void) {
@@ -70,45 +68,45 @@ static void task_led(void) {
 }
 
 static void task_led_red(void) {
-    while (1) {
-        GPIOB->PCOR = LED_RED_PIN;
-        sched_delay_ms(500U);
-        GPIOB->PSOR = LED_RED_PIN;
-        sem_give(&g_sem_red_to_blue); 
-        sem_take(&g_sem_blue_to_red);
-    }
+  while (1) {
+    GPIOB->PCOR = LED_RED_PIN;
+    sched_delay_ms(500U);
+    GPIOB->PSOR = LED_RED_PIN;
+    sem_give(&g_sem_red_to_blue);
+    sem_take(&g_sem_blue_to_red);
+  }
 }
 
 static void task_led_blue(void) {
-    while (1) {
-        sem_take(&g_sem_red_to_blue);
-        GPIOB->PCOR = LED_BLUE_PIN;
-        sched_delay_ms(500U);
-        GPIOB->PSOR = LED_BLUE_PIN;
-        sem_give(&g_sem_blue_to_red);
-    }
+  while (1) {
+    sem_take(&g_sem_red_to_blue);
+    GPIOB->PCOR = LED_BLUE_PIN;
+    sched_delay_ms(500U);
+    GPIOB->PSOR = LED_BLUE_PIN;
+    sem_give(&g_sem_blue_to_red);
+  }
 }
 
 static void task_uart(void) {
-    while (1) {
-        mutex_lock(&g_test_mutex);
-        uart0_puts("[LOW] locked\r\n");
-        sched_delay_ms(500U);
-        uart0_puts("[LOW] unlock\r\n");
-        mutex_unlock(&g_test_mutex);
-        sched_delay_ms(100U);
-    }
+  while (1) {
+    mutex_lock(&g_test_mutex);
+    uart0_puts("[LOW] locked\r\n");
+    sched_delay_ms(500U);
+    uart0_puts("[LOW] unlock\r\n");
+    mutex_unlock(&g_test_mutex);
+    sched_delay_ms(100U);
+  }
 }
 
 static void high_task_uart(void) {
-    while (1) {
-        mutex_lock(&g_test_mutex);
-        uart0_puts("[HIGH] locked\r\n");
-        sched_delay_ms(300U);
-        uart0_puts("[HIGH] unlock\r\n");
-        mutex_unlock(&g_test_mutex);
-        sched_delay_ms(100U);
-    }
+  while (1) {
+    mutex_lock(&g_test_mutex);
+    uart0_puts("[HIGH] locked\r\n");
+    sched_delay_ms(300U);
+    uart0_puts("[HIGH] unlock\r\n");
+    mutex_unlock(&g_test_mutex);
+    sched_delay_ms(100U);
+  }
 }
 
 int main(void) {
@@ -133,9 +131,9 @@ int main(void) {
   mutex_init(&g_test_mutex);
   sem_init(&g_sem_red_to_blue, 0, 1);
   sem_init(&g_sem_blue_to_red, 0, 1);
-  sched_task_create(task_led_red,  TASK_PRIORITY_NORMAL);
+  sched_task_create(task_led_red, TASK_PRIORITY_NORMAL);
   sched_task_create(task_led_blue, TASK_PRIORITY_NORMAL);
-  //sched_task_create(task_led, TASK_PRIORITY_NORMAL);
+  // sched_task_create(task_led, TASK_PRIORITY_NORMAL);
   sched_task_create(high_task_uart, TASK_PRIORITY_HIGH);
   sched_task_create(task_uart, TASK_PRIORITY_LOW);
 
