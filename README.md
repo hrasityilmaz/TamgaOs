@@ -1,6 +1,7 @@
 # TamgaOS (yula)
 
 
+![TamgaOS](images/Tamgaos_Rtos.mp4)  
 ![TamgaOS](images/tamgaos.gif)  
 
 
@@ -29,7 +30,11 @@ Currently working on NXP-K64F board (Cotex-m4)
  * systemtick  
  * uart  
  * mcg  
+ * context switch
+ * mutex  
+ * semaphore  
 
+**Still need approvments**     
 **Later will add Cortex-M7 port also (STM32H7)**  
   
 Both Zig and C versions successfully boot through **Limine** using a **Multiboot2** header.
