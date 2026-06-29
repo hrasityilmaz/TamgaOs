@@ -1,101 +1,82 @@
-# TamgaOS (yula)
+# TamgaOS
 
-![TamgaOS](images/tamgaos_rtos.gif)    
-![TamgaOS](images/tamgaos.gif)  
+Bare-metal RTOS written in C and ARM assembly for the NXP K64F (Cortex-M4).  
+Started as a learning project — bootloaders, memory layouts, context switching, executable formats.
 
+Later will add zig port
 
-Experimental x86 operating system written in **Zig 0.16.0** and **C**.
+![TamgaOS](images/tamgaos_rtos.gif)
 
-TamgaOS started as a small learning kernel for exploring low-level systems programming, executable formats, bootloaders, memory layouts, and operating system internals.
+## ARM port — K64F (Cortex-M4)
 
-The project is still in an early experimental stage. The goal is to understand the boot process step by step and build the kernel piece by piece while comparing low-level implementation details between Zig and C.
+Currently active. All kernel work targets the NXP K64F board. Zig port planned for later.
 
-## Current status
+**Boot**
+- Startup file 
+- Linker script (linker.ld)
+- MCG clock init
 
-Features currently implemented:  
-**For x86:**
-* Basic Global Descriptor Table (GDT) setup
-* Basic GDI
-* Serial Monitor
-* Zig and C kernel implementations for comparison
-* ISO generation through xorriso
+**Kernel**
+- Preemptive scheduler
+- PendSV context switch
+- PSP per-task isolation
 
-**For Arm**  
-Currently working on NXP-K64F board (Cotex-m4)  
-**For arm currently only with C/assembly later ı will implement Zig**
+**Sync**
+- Mutex (LDREX/STREX)
+- Semaphore
+- Critical section (cpsid/cpsie)
 
- * StartupFile  
- * linker.ld  
- * systemtick  
- * uart  
- * mcg  
- * context switch
- * mutex  
- * semaphore  
+**Drivers**
+- SysTick
+- UART
+- PIT timer
 
-**Still need approvments**     
-**Later will add Cortex-M7 port also (STM32H7)**  
-  
-Both Zig and C versions successfully boot through **Limine** using a **Multiboot2** header.
+Still improving — development notes at https://auctra.app
 
-Current output:
+## x86 port — Zig & C kernel
 
+Experimental dual implementation for comparing low-level Zig vs C. Boots via Limine with a Multiboot2 header.
+
+**Implemented**
+- GDT setup
+- Serial monitor
+- ISO via xorriso
+- Zig + C comparison
+
+**Boot output**
 ```text
 Zig -> TamgaOS
        KERNEL OK
-
 C   -> TamgaOS __C__
        GDT OK __C__
        Kernel OK __C__
 ```
 
-## Building
+![TamgaOS](images/tamgaos.gif)
 
-Build the Zig kernel:
+## Build
 
+### ARM — K64F
+```sh
+make clean
+make 
+make flash
+```
+
+### x86 — Zig
 ```powershell
 zig build -Doptimize=ReleaseFast
-```
-
-Copy the generated kernel --zig-out/bin/...-- to `iso/boot/` and the generated `c_kernel` to `iso_c/boot/`.
-
-Generate the C kernel ISO:
-
-```powershell
-.\mkiso_c.ps1
-```
-
-or for Zig kernel:  
-```powershell
 .\mkiso.ps1
-```
-
-ISO generation uses **xorriso**.
-
-and 
-for C_kernel:  
-```powershell
- qemu-system-i386 -cdrom .\TamgaOS_C.iso -boot d  
-```
-
-if with log on serial for C kernel
-
-```powershell
-qemu-system-i386 -cdrom .\TamgaOS_C.iso -boot d -serial stdio
-```
-or 
-
-for Zig kernel  
-```powershell
- qemu-system-i386 -cdrom .\TamgaOS.iso -boot d  
-```
-if with log on serial for Zig Kernel
-
-```powershell
 qemu-system-i386 -cdrom .\TamgaOS.iso -boot d -serial stdio
 ```
 
-## Notes
+### x86 — C
+```powershell
+.\mkiso_c.ps1
+qemu-system-i386 -cdrom .\TamgaOS_C.iso -boot d -serial stdio
+```
+Allredy x86 part will not continue active development will be on ARM part !
 
-This is not a production operating system.  
-Development notes on https://auctra.app 
+---
+
+Not a production OS. Development log: https://auctra.app
