@@ -1,14 +1,13 @@
 #ifndef SEMAPHORE_H
 #define SEMAPHORE_H
 
+#include "task.h"
 #include <stdint.h>
 
-//
-// TODO: Add wait list !!!!
-//
 typedef struct {
   volatile int32_t count;
   int32_t max;
+  task_t *waiters;
 } sem_t;
 
 void sem_init(sem_t *s, int32_t initial, int32_t max);
