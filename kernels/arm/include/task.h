@@ -28,6 +28,7 @@ typedef struct {
   uint8_t priority;
   uint32_t delay_ticks;
   void (*func)(void);
+  struct task_s *wait_next;
   uint32_t stack[TASK_STACK_SIZE];
 } task_t;
 
