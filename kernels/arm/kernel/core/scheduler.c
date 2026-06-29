@@ -176,3 +176,15 @@ void sched_start(void) {
   while (1) {
   }
 }
+
+void sched_wake_task(task_t *t) {
+  if (t == NULL)
+    return;
+
+  t->wait_next = NULL;
+  t->delay_ticks = 0U;
+  t->state = TASK_READY;
+  g_next_task = sched_select_next();
+  if (g_next_task != g_current_task)
+    trigger_pendsv();
+}
