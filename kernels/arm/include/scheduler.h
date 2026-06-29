@@ -17,5 +17,6 @@ void sched_task_pause(uint8_t index);
 void sched_task_resume(uint8_t index);
 void sched_start(void);
 void sched_tick(void);
+void sched_wake_task(task_t *t);
 
 #endif
