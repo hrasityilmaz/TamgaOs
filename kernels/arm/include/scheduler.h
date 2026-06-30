@@ -4,7 +4,6 @@
 #include "task.h"
 #include <stdint.h>
 
-// Defined in assembly (pendsv_handler.s)
 extern task_t *volatile g_current_task;
 extern task_t *volatile g_next_task;
 
