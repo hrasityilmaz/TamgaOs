@@ -1,20 +1,16 @@
 # TamgaOS
 
-Bare-metal RTOS written in C and ARM assembly for the NXP K64F (Cortex-M4).  
+Bare-metal RTOS written in C and ARM assembly.  
 Started as a learning project — bootloaders, memory layouts, context switching, executable formats.
-
-Later will add zig port
 
 ![TamgaOS](images/tamgaos_rtos.gif)
 
 ## ARM port — K64F (Cortex-M4)
 
-Currently active. All kernel work targets the NXP K64F board. Zig port planned for later.
-
 **Boot**
-- Startup file 
+- Startup file (hand-written)
 - Linker script (linker.ld)
-- MCG clock init
+- MCG clock init (120MHz)
 
 **Kernel**
 - Preemptive scheduler
@@ -23,19 +19,32 @@ Currently active. All kernel work targets the NXP K64F board. Zig port planned f
 
 **Sync**
 - Mutex (LDREX/STREX)
-- Semaphore
+- Semaphore with priority-based wait queues
 - Critical section (cpsid/cpsie)
 
 **Drivers**
-- SysTick
+- PIT timer (32-bit, used as scheduler tick)
 - UART
-- PIT timer
+- MCG
 
-Still improving — development notes at https://auctra.app
+## ARM port — STM32H753ZI (Cortex-M7)
+
+Work in progress — porting TamgaOS to the Nucleo-144 board.
+
+**Boot**
+- Startup file with I-Cache/D-Cache invalidate + enable sequence (PM0253)
+- Linker script (DTCM, AXI, SRAM1-4, BKPSRAM)
+- RCC init (HSI 64MHz)
+
+**Drivers**
+- SysTick (1ms tick)
+- UART (in progress)
+
+Still improving — development notes at https://auctra.app will be still not added 
 
 ## x86 port — Zig & C kernel
 
-Experimental dual implementation for comparing low-level Zig vs C. Boots via Limine with a Multiboot2 header.
+Experimental dual implementation for comparing low-level Zig vs C. Boots via Limine with a Multiboot2 header. Active development paused — focus is on ARM.
 
 **Implemented**
 - GDT setup
@@ -59,8 +68,15 @@ C   -> TamgaOS __C__
 ### ARM — K64F
 ```sh
 make clean
-make 
-make flash
+make BOARD=k64f
+make flash BOARD=k64f
+```
+
+### ARM — STM32H753ZI
+```sh
+make clean
+make BOARD=stm32h753zi
+make flash BOARD=stm32h753zi
 ```
 
 ### x86 — Zig
@@ -75,7 +91,6 @@ qemu-system-i386 -cdrom .\TamgaOS.iso -boot d -serial stdio
 .\mkiso_c.ps1
 qemu-system-i386 -cdrom .\TamgaOS_C.iso -boot d -serial stdio
 ```
-Allredy x86 part will not continue active development will be on ARM part !
 
 ---
 
