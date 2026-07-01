@@ -22,7 +22,7 @@ typedef enum {
   TASK_DEAD = 4U
 } task_state_t;
 
-typedef struct {
+typedef struct task_s {
   uint32_t *sp;
   task_state_t state;
   uint8_t priority;
