@@ -18,6 +18,7 @@ CFLAGS += -std=gnu11
 CFLAGS += -Iinclude
 CFLAGS += -Iboards/$(BOARD)
 CFLAGS += -D$(BOARD_DEFINE)
+CFLAGS += $(BOARD_INCLUDES)
 
 ASFLAGS  = $(CPU_FLAGS)
 ASFLAGS += -g
@@ -26,7 +27,7 @@ LDFLAGS  = -T $(LDSCRIPT)
 LDFLAGS += -Wl,-Map=$(TARGET)_$(BOARD).map
 LDFLAGS += -nostartfiles
 
-C_SRCS  += src/main.c
+# C_SRCS  += src/main.c
 AS_SRCS += $(STARTUP)
 
 C_OBJS   = $(C_SRCS:.c=.o)
@@ -52,7 +53,7 @@ $(TARGET)_$(BOARD).hex: $(TARGET)_$(BOARD).elf
 	$(AS) $(ASFLAGS) -c $< -o $@
 
 flash: $(TARGET)_$(BOARD).bin
-	pyocd flash -t $(BOARD) $(TARGET)_$(BOARD).bin
+	pyocd flash -t $(PYOCD_TARGET) $(TARGET)_$(BOARD).bin
 
 clean:
 	powershell -Command "'$(OBJS) $(TARGET)_$(BOARD).elf $(TARGET)_$(BOARD).bin $(TARGET)_$(BOARD).hex $(TARGET)_$(BOARD).map' -split ' ' | ForEach-Object { Remove-Item -ErrorAction SilentlyContinue -Force $$_ }"
