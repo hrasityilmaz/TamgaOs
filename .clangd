@@ -3,5 +3,7 @@ CompileFlags:
     - --target=arm-none-eabi
     - -mcpu=cortex-m4
     - -mthumb
-    - -Isrc/ports/arm/include
+    - -Ikernels/arm/include
+    - -Ikernels/arm/drivers/k64f
+    - -Ikernels/arm/drivers/stm32h753zi
     - -Iinclude
