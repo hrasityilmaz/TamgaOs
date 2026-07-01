@@ -67,23 +67,38 @@ static void task_led(void) {
   }
 }
 
+// static void task_led_red(void) {
+//   while (1) {
+//     GPIOB->PCOR = LED_RED_PIN;
+//     sched_delay_ms(500U);
+//     GPIOB->PSOR = LED_RED_PIN;
+//     sem_give(&g_sem_red_to_blue);
+//     sem_take(&g_sem_blue_to_red);
+//   }
+// }
+
 static void task_led_red(void) {
   while (1) {
     GPIOB->PCOR = LED_RED_PIN;
     sched_delay_ms(500U);
     GPIOB->PSOR = LED_RED_PIN;
+    uart0_puts("[RED] before give\r\n");
     sem_give(&g_sem_red_to_blue);
+    uart0_puts("[RED] after give, before take\r\n");
     sem_take(&g_sem_blue_to_red);
+    uart0_puts("[RED] after take\r\n");
   }
 }
 
 static void task_led_blue(void) {
   while (1) {
     sem_take(&g_sem_red_to_blue);
+    uart0_puts("[BLUE] got sem\r\n");
     GPIOB->PCOR = LED_BLUE_PIN;
     sched_delay_ms(500U);
     GPIOB->PSOR = LED_BLUE_PIN;
     sem_give(&g_sem_blue_to_red);
+    uart0_puts("[BLUE] gave sem\r\n");
   }
 }
 
