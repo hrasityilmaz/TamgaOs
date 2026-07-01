@@ -44,7 +44,7 @@ Still improving — development notes at https://auctra.app will be still not ad
 
 ## x86 port — Zig & C kernel
 
-Experimental dual implementation for comparing low-level Zig vs C. Boots via Limine with a Multiboot2 header. Active development paused — focus is on ARM.
+Experimental dual implementation for comparing low-level Zig vs C. Boots via Limine with a Multiboot2 header. Active development paused for x86 part. — focus is on ARM.
 
 **Implemented**
 - GDT setup
