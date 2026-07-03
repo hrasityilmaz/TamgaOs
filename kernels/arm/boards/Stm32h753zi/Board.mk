@@ -16,6 +16,7 @@ CPU_FLAGS += -DCORE_CLOCK_HZ=480000000UL
 # C_SRCS  += kernel/core/mutex.c
 # C_SRCS  += kernel/core/semaphore.c
 # C_SRCS  += drivers/stm32h753zi/uart.c
+
 C_SRCS  += drivers/stm32h753zi/rcc.c
 C_SRCS += drivers/stm32h753zi/systick.c
 C_SRCS += src/stm32h753zi/main.c
