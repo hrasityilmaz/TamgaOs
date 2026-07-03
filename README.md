@@ -38,6 +38,7 @@ Work in progress — porting TamgaOS to the Nucleo-144 board.
 
 **Drivers**
 - SysTick (1ms tick)
+- RCC (HSI-64MHZ- and HSE-480Mhz-)  
 - UART (in progress)
 
 Still improving — development notes at https://auctra.app will be still not added 
