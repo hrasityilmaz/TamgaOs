@@ -1,4 +1,3 @@
-
 .syntax unified
 .cpu    cortex-m7
 .thumb
@@ -214,6 +213,21 @@ _vectors:
 .thumb_func
 .global Reset_Handler
 Reset_Handler:
+
+    /* ── 0. ExitRun0Mode — must be done before writing to RAM
+     *    STM32H7 starts in Run* mode where RAM writes are forbidden
+     *    until PWR supply is configured. LDO supply: set LDOEN (bit1)
+     *    in PWR_CR3 and wait for ACTVOSRDY (bit13) in PWR_CSR1.
+     *    REF: RM0433 Section 6.4 (power-up sequence)
+     * ── */
+    ldr  r1, =0x58024800       @ PWR base
+    ldr  r0, [r1, #0x00C]      @ PWR_CR3 offset 0x00C
+    orr  r0, r0, #(1 << 1)     @ LDOEN bit1
+    str  r0, [r1, #0x00C]
+.Lwait_actvosrdy:
+    ldr  r0, [r1, #0x004]      @ PWR_CSR1 offset 0x004
+    tst  r0, #(1 << 13)        @ ACTVOSRDY bit13
+    beq  .Lwait_actvosrdy
 
     /* ── 1. Invalidate I-Cache (PM0253: write 0 to ICIALLU) ── */
     /* page 243 Invalidate cache code  */
