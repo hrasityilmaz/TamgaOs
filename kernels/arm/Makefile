@@ -10,7 +10,7 @@ SIZE    = arm-none-eabi-size
 include boards/$(BOARD)/board.mk
 
 CFLAGS  = $(CPU_FLAGS)
-CFLAGS += -O2 -DNDEBUG  # -O0 -g
+CFLAGS += -O0 -DNDEBUG #-O2 -DNDEBUG  # -O0 -g
 CFLAGS += -Wall -Wextra
 CFLAGS += -ffunction-sections
 CFLAGS += -fdata-sections
