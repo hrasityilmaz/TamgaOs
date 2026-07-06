@@ -11,7 +11,7 @@
 #define CORE_CLOCK_HZ    (120000000UL)  /* PLL (OUTDIV1 = /1) */
 #endif
 
-#define EXTAL0_HZ        (50000000UL)   /* Harici kristal      */
+#define EXTAL0_HZ        (50000000UL)   /* External ethernet clock */
 #define BUS_CLOCK_HZ     (60000000UL)   /* Core / 2            */
 #define FLEXBUS_CLOCK_HZ (40000000UL)   /* Core / 3            */
 #define FLASH_CLOCK_HZ   (24000000UL)   /* Core / 5            */
