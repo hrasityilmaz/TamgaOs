@@ -41,13 +41,13 @@ void sem_take(sem_t *s) {
     if (s->count > 0) {
       s->count--;
       sched_critical_exit(p);
-      uart0_puts("[TAKE] got it immediately\r\n");
+      uart_puts("[TAKE] got it immediately\r\n");
       return;
     }
     g_current_task->state = TASK_BLOCKED;
     wq_insert(s, g_current_task);   /* must stay inside critical section */
     sched_critical_exit(p);
-    uart0_puts("[TAKE] blocking now\r\n");
+    uart_puts("[TAKE] blocking now\r\n");
 
     sched_block();   /* must stay BLOCKED, not READY */
   }
@@ -60,11 +60,11 @@ void sem_give(sem_t *s) {
     if (s->count < s->max)
       s->count++;          /* hand off the token so sem_take's re-check succeeds */
     sched_critical_exit(p);
-    uart0_puts("[GIVE] found waiter, waking\r\n");
+    uart_puts("[GIVE] found waiter, waking\r\n");
     sched_wake_task(waiter);
     return;
   }
-  uart0_puts("[GIVE] no waiter, count++\r\n");
+  uart_puts("[GIVE] no waiter, count++\r\n");
   if (s->count < s->max) {
     s->count++;
   }
