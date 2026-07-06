@@ -4,6 +4,8 @@ CompileFlags:
     - -mcpu=cortex-m4
     - -mthumb
     - -Ikernels/arm/include
+    - -Ikernels/arm/include/k64f
+    - -Ikernels/arm/include/stm32h753zi
     - -Ikernels/arm/drivers/k64f
     - -Ikernels/arm/drivers/stm32h753zi
     - -Iinclude
