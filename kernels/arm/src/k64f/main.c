@@ -82,32 +82,32 @@ static void task_led_red(void) {
     GPIOB->PCOR = LED_RED_PIN;
     sched_delay_ms(500U);
     GPIOB->PSOR = LED_RED_PIN;
-    uart0_puts("[RED] before give\r\n");
+    uart_puts("[RED] before give\r\n");
     sem_give(&g_sem_red_to_blue);
-    uart0_puts("[RED] after give, before take\r\n");
+    uart_puts("[RED] after give, before take\r\n");
     sem_take(&g_sem_blue_to_red);
-    uart0_puts("[RED] after take\r\n");
+    uart_puts("[RED] after take\r\n");
   }
 }
 
 static void task_led_blue(void) {
   while (1) {
     sem_take(&g_sem_red_to_blue);
-    uart0_puts("[BLUE] got sem\r\n");
+    uart_puts("[BLUE] got sem\r\n");
     GPIOB->PCOR = LED_BLUE_PIN;
     sched_delay_ms(500U);
     GPIOB->PSOR = LED_BLUE_PIN;
     sem_give(&g_sem_blue_to_red);
-    uart0_puts("[BLUE] gave sem\r\n");
+    uart_puts("[BLUE] gave sem\r\n");
   }
 }
 
 static void task_uart(void) {
   while (1) {
     mutex_lock(&g_test_mutex);
-    uart0_puts("[LOW] locked\r\n");
+    uart_puts("[LOW] locked\r\n");
     sched_delay_ms(500U);
-    uart0_puts("[LOW] unlock\r\n");
+    uart_puts("[LOW] unlock\r\n");
     mutex_unlock(&g_test_mutex);
     sched_delay_ms(100U);
   }
@@ -116,9 +116,9 @@ static void task_uart(void) {
 static void high_task_uart(void) {
   while (1) {
     mutex_lock(&g_test_mutex);
-    uart0_puts("[HIGH] locked\r\n");
+    uart_puts("[HIGH] locked\r\n");
     sched_delay_ms(300U);
-    uart0_puts("[HIGH] unlock\r\n");
+    uart_puts("[HIGH] unlock\r\n");
     mutex_unlock(&g_test_mutex);
     sched_delay_ms(100U);
   }
@@ -127,8 +127,8 @@ static void high_task_uart(void) {
 int main(void) {
   // disable_wdog();
   mcg_init_120mhz();
-  uart0_init(115200U);
-  uart0_puts("TamgaOS booting...\r\n");
+  uart_init(115200U);
+  uart_puts("TamgaOS booting...\r\n");
   board_init();
 
   // uint32_t pc, lr, sp, xpsr;
@@ -155,7 +155,7 @@ int main(void) {
   pit_init(1000U);
   pit_sched_enable();
 
-  uart0_puts("Starting scheduler...\r\n");
+  uart_puts("Starting scheduler...\r\n");
   sched_start();
   return 0;
 }
