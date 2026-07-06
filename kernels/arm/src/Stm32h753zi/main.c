@@ -56,9 +56,11 @@ static void task_led_red(void)
     }
 }
 
-static void task_uart_test(void){
-    for(;;){
-        uart_puts("[HIGH] task test\r\n");
+static void task_uart_test(void) {
+    uint32_t cnt = 0U;
+    for (;;) {
+        cnt++;
+        uart_printf("[UART] tick = %u\r\n", cnt);
         sched_delay_ms(1200U);
     }
 }
