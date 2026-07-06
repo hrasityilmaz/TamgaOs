@@ -1,0 +1,452 @@
+LDR   → memory'den register'a yükle
+LDMIA → birden fazla register yükle, adres artar
+STR   → register'dan memory'ye yaz
+MOV   → register'a sabit değer yaz
+
+MRS   → special register'dan oku  (PSP, CONTROL, xPSR...)
+MSR   → special register'a yaz    (PSP, CONTROL...)
+
+BX    → register'daki adrese zıpla (Thumb bit kontrol eder)
+BL    → zıpla + dönüş adresini LR'a kaydet
+
+CPSID i  → PRIMASK=1, interrupt'ları kapat
+CPSIE i  → PRIMASK=0, interrupt'ları aç
+
+DSB   → data synchronization barrier
+ISB   → instruction synchronization barrier
+DMB   → data memory barrier
+
+LDREX → exclusive load  (mutex_try_acquire)
+STREX → exclusive store (mutex_try_acquire)
+CLREX → exclusive monitor temizle
+
+WFI   → Wait For Interrupt (idle task + delay)
+NOP   → no operation
+
+On this post will be a little longer ı believe that finally Registers logic is okay sooooo ı will make this post 3 section:
+1) LIFCYCLE OF RTOS(some short :) )
+2) REGISTERS
+3) ASSEMBLY
+4) DEBUG PROCESS
+
+
+When pushing context to the stack, the hardware saves eight 32-bit words, comprising xPSR, 
+ReturnAddress, LR (R14), R12, R3, R2, R1, and R0  // B1-643
+If the processor implements the Floating-point extension( ı didnt implement yet :) ) , in addition to this eight word stack frame it can
+also either push FP state onto the stack, or reserve space on the stack for this state. For more information
+see Stack alignment on exception entry on page B1-647.
+
+RTOS LIFECYCLE:
+Normaly MCU run on MSP (Main Stack) but when we want real time support every task need their special stack
+so we MUST use PSP. It will not damage to MCU runcycle. All critical parts for MCU still run on MSP so if any task broke only this task efect MCU will not go hardfault etc
+
+For using PSP We need to set up SPSEL bit from CONTROL Register. When MCU/board reset default SP_Main starting.
+More clear:
+Handler mode  all the time MSP
+- Reset_Handler
+- SysTick_Handler
+- PendSV_Handler
+- HardFault_Handler
+- diğer IRQ'lar
+
+our tasks PSP :)
+
+PSP isolation does not prevent HardFault completely, but gives the system a recovery chance. If a task corrupts its own stack,
+the HardFault handler still runs on MSP safely. Inside the handler we can read IPSR to identify which task caused the fault, then
+mark that task as TASK_PAUSED and trigger a context switch to continue running other tasks without full system reset.
+
+This is exactly why RTOS tasks must use PSP, not MSP. MSP is the last line of defense.
+
+
+After a small starting let's start explainng registers everything will be more and more clear...
+And anyway here again ı want to say it is what ı understand and just summary generaly ı am giving page numbers also go and check for detailed!!!
+
+CONTROL REGISTER:
+
+31      3  2      1      0
+┌──────────┬──────┬──────┬──────┐
+│ reserved │ FPCA │SPSEL │nPRIV │
+│   0...0  │  0   │  1   │  0   │
+└──────────┴──┴───┴──────┴──────┘
+
+nPRIV : if 0 mcu will run on unprivileged mode but we dont want this msr, cpsid etc will not work these instructions want priviliged mod
+SPSEL : MSP or PSP usage if 0 MSP after reset directly starting as MSP
+FPCA  : Floating point bit if we will use float numers we MUST use 1 (For now u used 0 later implement...)
+
+PRIMASK:
+
+31                  1       0
+┌───────────────────┬──────┐
+│                   │  PM  │
+│                   │      │  
+└───────────────────┴──────┘
+The exception mask register, a 1-bit register. Setting PRIMASK to 1 raises the execution priority to 0.
+
+The CPSIE i instruction is equivalent to writing a 0 into PRIMASK
+The CPSID i instruction is equivalent to writing a 1 into PRIMASK // ARM 7 referance manual B5-802 
+
+
+FAULTMASK:
+
+31                  1       0
+┌───────────────────┬──────┐
+│                   │  FM  │
+│                   │      │
+└───────────────────┴──────┘
+FM=1 → Masks all exceptions and faults except NMI
+Difference from PRIMASK: It also blocks fault handlers
+
+BASEPRI:
+
+31                  7       0
+┌─────────────────────────────┐
+│                  │ basepri  │
+│                  │          │
+└──────────────────┴──────────┘
+
+It masks interrupts below a certain priority level. Entering 0 disables it; entering 1-255 blocks interrupts
+with priorities below that value. Priorities below that value will be blocked.
+
+
+xPSR:
+This register actually sum of 3 registers. -> APSR, IPSR and EPSR all together it is calling as xPSR. you can read as a 32 bit register!!!
+
+APSR :
+Application PSR holding flags.
+
+IPSR :
+Interrupt PSR holding which exception is working  in Thread mode, the value is 0 but  Handler mode, holds the exception number of the currently-executing exception.(from entry vector entry vektor defined in startup file of mcu!!)
+On reset, the processor is in Thread mode and the Exception Number field of the IPSR is cleared to 0. As a result, the value 1, the exception number for reset, is a transitory value, that software cannot see as a valid
+IPSR Exception Number. (Page: B1-625)
+
+EPSR :
+Execution PSR is holding Thumb bit On ARM all the time is 1 :) 
+
+31 30 29 28 27    24    15       8  7      0
+┌──┬──┬──┬──┬──┬────┬───────────┬──────────┐
+│N │Z │C │V │Q │ T  │ reserved  │ ISR_NUM  │
+└──┴──┴──┴──┴──┴────┴───────────┴──────────┘
+ ▲  ▲  ▲  ▲  ▲   ▲                   ▲
+ │  │  │  │  │   │                   │
+ │  │  │  │  │   EPSR            IPSR
+ └──┴──┴──┴──┘
+    APSR
+
+Here:
+---  APSR PART  ----
+N(Negative Flag)   : if result is negative value is 1
+Z(Zero Flag)       : if result is zero value is 1
+C(Carry Flag)      : if cary value is 1
+V(Overflow Flag)   : if owerflow value is 1
+Q(Saturation Flag) : if owerflow from DSP value is 1
+
+---  EPSR  ---
+T(Thumb bit) : On ARM all the time is 1 !!
+
+---  IPSR  ---
+ISR_NUM : means which exception is working value is 0 in thread mode !
+
+
+On programming part for xPSR we need to set only Thumb bit  -> 0x01000000UL it is  24. bit which is thumb bit 1. All is zero as initial.
+
+
+SCS ( System Control Space ) : 0xE000E000 - 0xE000EFFF
+Memory-mapped registers. No MRS/MSR needed, direct pointer access.
+┌─────────────────────────────────────────┐
+│  SCS (0xE000E000)                       │
+│  ├── SysTick   (0xE000E010)             │
+│  ├── NVIC      (0xE000E100)             │
+│  ├── SCB       (0xE000ED00) <-  we use  │
+│  │     ├── ICSR    0xE000ED04           │
+│  │     ├── VTOR    0xE000ED08           │
+│  │     ├── AIRCR   0xE000ED0C           │
+│  │     └── SHPR3   0xE000ED20           │
+│  └── MPU       (0xE000ED90)             │
+└─────────────────────────────────────────┘
+
+ICSR ( Interrupt Control and State Register ):
+Directly from referance manual :
+
+Provides software control of the NMI, PendSV, and SysTick exceptions, and provides interrupt status information
+
+
+31      29 28 27      23 22      19 18    16 15    12 11     9 8       0
+┌─────────┬──┬──────────┬──────────┬────────┬────────┬──────────┬─────────────┐
+│         │PS│          │  VECTPENDING      │reserved│ RETTOBASE│ VECTACTIVE  │
+│         │ET│          │  [20:12] │        │        │          │  [8:0]      │
+└─────────┴──┴──────────┴──────────┴────────┴────────┴──────────┴─────────────┘
+           ▲                  ▲                          ▲         ▲
+           │                  │                          │         │
+        PENDSVSET          waiting                  any            active
+        (bit28)            exception                exception      exception
+                           number
+
+
+
+bit[28] PENDSVSET
+On writes, sets the PendSV exception as pending. On reads, indicates the
+current state of the exception:
+0 = On writes, has no effect. On reads, PendSV is not pending.
+1 = On writes, make PendSV exception pending. On reads, PendSV is pending.
+Normally, software writes 1 to this bit to request a context switch.
+
+
+bit[27] PENDSVCLR
+ Removes the pending status of the PendSV exception:
+0 = No effect.
+1 = Remove pending status
+
+bit[26] PENDSTSET
+On writes, sets the SysTick exception as pending. On reads, indicates the
+current state of the exception:
+0 = On writes, has no effect. On reads, SysTick is not pending.
+1 = On writes, make SysTick exception pending. On reads, SysTick is
+pending
+
+bit[25] PENDSTCLR
+Removes the pending status of the SysTick exception:
+0 = No effect.
+1 = Remove pending status
+
+
+bit[22:12] VECTPENDING
+The exception number of the highest priority pending exception. A value of 0 indicates that there is no pending exception.
+
+bit[11] RETTOBASE
+In Handler mode, indicates whether there is an active exception other than
+the exception indicated by the current value of the IPSR:
+0 = There is an active exception other than the exception shown by IPSR.
+1 = There is no active exception other than any exception shown by IPSR.
+In Thread mode the value of this bit is UNKNOWN.
+For more information see The special-purpose program status registers,
+xPSR on page B1-624
+
+bit[8:0] VECTACTIVE
+The exception number of the current executing exception. A value of 0
+indicates that the processor is in Thread mode.
+
+
+VTOR:
+
+31          7 6          0
+┌────────────┬────────────┐
+│   TBLOFF   │            │
+│   [31:7]   │            │
+└────────────┴────────────┘
+From book: Holds the vector table address.
+
+When interrupt came this vector is where learning fromm here 
+VTOR and ICSR working together:
+When interrupt came :
+ICSR → VECTPENDING = which exception?
+VTOR → where is Vector table ?
+VTOR + (exception_no × 4) → handler function address  and finally jump to that address...
+
+VTOR + 0         -> SP_main (reset value)
+VTOR + (1 × 4)   -> Reset_Handler
+VTOR + (14 × 4)  -> PendSV_Handler
+VTOR + (15 × 4)  -> SysTick_Handler
+
+AICRR (Application Interrupt and Reset Control Register)
+
+I didnt implement it yet. Working for software reset maybe if ı will add bootloader ı will need for next issues ı am thingking to add ...
+
+
+31          16 15  11 10     8  7  3  2  1  0
+┌─────────────┬──────┬────────┬──────┬─────────────────────────┬────────────
+│  VECTKEY    │rez   │PRIGROUP│rez   │SYSRESETREQ│VECTCLRACTIV │VECTRESET  │
+│  [31:16]    │      │[10:8]  │      │           │             │           │
+└─────────────┴──────┴────────┴──────┴───────────┴─────────────┴───────────┘
+
+
+bit[31:16] VECTKEY      → when writing must be  0x05FA !
+bit[10:8]  PRIGROUP 
+bit[2]     SYSRESETREQ  → When 1 system reset
+bit[1]     VECTCLRACTIVE→ on debug mode clear active exception
+bit[0]     VECTRESET    → only mcu reset
+
+SHPR:
+
+SHPR register 3 registers SHPR1 SHPR2 SHPR3 registers.
+SHPR1 : exception 4,5,6,7    (MemManage, Bus, Usage, reserved)
+SHPR2 : exception 8,9,10,11  (reserved, reserved, reserved, SVCall)
+SHPR3 : exception 12,13,14,15 (reserved, reserved, PendSV, SysTick)
+
+Sooo we are using here SHPR3 register PENDSV AND SysTick SHPR3[14] and SHPR3[15].
+
+
+31      24 23      16 15       8 7        0
+┌─────────┬──────────┬──────────┬──────────┐
+│ PRI_15  │  PRI_14  │  rezerve │  rezerve │
+│ SysTick │  PendSV  │          │          │
+└─────────┴──────────┴──────────┴──────────┘
+ 0xE000ED23 0xE000ED22
+
+We are gibing 0xFF the minimum priority if another interrup came firsh MUST wait to finish this interrupt.
+If SysTick had higher priority than PendSV, SysTick could preempt PendSV during context switch — which would corrupt
+the switch. Same priority prevents this.
+  
+Vector Table:
+
+The Vector table must be naturally aligned to a power of two whose alignment value is greater than or equal 
+to (Number of Exceptions supported x 4), with a minimum alignment of 128 bytes. On power-on or reset, 
+the processor uses the entry at offset 0 as the initial value for SP_main, see The SP registers on page B1-623. 
+All other entries must have bit [0] set to 1, because this bit defines the EPSR.T bit on exception entry. See 
+Reset behavior on page B1-641 and Exception entry behavior on page B1-643 for more information. (Directly from reference manuel:) )
+
+from my TamgaOs.elf file Biber output is here soo we can see align part:
+
+
+ Nr   Name                 Type         Address            Offset     Size       Flg    Lnk    Info   Align
+  ----------------------------------------------------------------------------------------------------------
+  0                         NULL         0x0000000000000000  0x000000  0x000000           0      0      0
+  1    .vectors             PROGBITS     0x0000000000000000  0x010000  0x000190  A        0      0      4
+  2    .flashconfig         PROGBITS     0x0000000000000400  0x010400  0x000010  A        0      0      4
+  3    .text                PROGBITS     0x0000000000000410  0x010410  0x000A4C  AX       0      0      4
+  4    .data                PROGBITS     0x0000000020000000  0x020000  0x000000  WA       0      0      1
+  5    .bss                 NOBITS       0x0000000020000000  0x020000  0x0049C4  WA       0      0      4
+  6    .noinit              NOBITS       0x00000000200049C4  0x000000  0x000000  WA       0      0      1
+  7    .ARM.attributes      ARM_ATTR     0x0000000000000000  0x020000  0x00002F           0      0      1
+  8    .comment             PROGBITS     0x0000000000000000  0x02002F  0x000049  MS       0      0      1
+  9    .debug_line          PROGBITS     0x0000000000000000  0x020078  0x00013F           0      0      1
+  10   .debug_info          PROGBITS     0x0000000000000000  0x0201B7  0x000072           0      0      1
+  11   .debug_abbrev        PROGBITS     0x0000000000000000  0x020229  0x00003C           0      0      1
+  12   .debug_aranges       PROGBITS     0x0000000000000000  0x020268  0x000060           0      0      8
+  13   .debug_str           PROGBITS     0x0000000000000000  0x0202C8  0x00009F  MS       0      0      1
+  14   .symtab              SYMTAB       0x0000000000000000  0x020368  0x000AE0           15     130    4
+  15   .strtab              STRTAB       0x0000000000000000  0x020E48  0x0003A5           0      0      1
+  16   .shstrtab            STRTAB       0x0000000000000000  0x0211ED  0x0000A3           0      0      1
+
+And yes alread ı add my linker.ld file .noinit part for holidng debug or crash data hold. Still not implemented only starting point :)
+
+
+
+EXCEPTIONS:
+
+A3-84 and  B1-631 !!!
+
+Okay not let is explain some Assembly:
+ARM using UAL means Unified Assembly Language On start we define as .syntax unified
+
+PART: A4.2.2 IMPORTANT!!!
+
+LDR:
+
+Load from memory to register.
+
+LDR Rd, [Rn, #offset]
+      ▲    ▲    ▲
+      │    ▲    └── how many bytes forward
+           └─────── where is base register
+      └──────────── result
+
+Exp from my code:
+
+ldr r1, [r0, #0] # read task->sp
+r0 = task_t* (task_t* from c part on my code..)
+[r0, #0] = task_t's offset 0 = sp field
+r1 = task->sp
+
+ldr r2, [r1, #24] read PC from stack
+here :
+r1 = starting point of exception frame
+#24 = 6 × 4 byte forward
+[r1, #24] = PC valuıe
+r2 = task's start adress
+
+C also they are same:
+ldr r1, [r0, #0]  means  r1 = *((uint32_t*)r0);
+ldr r2, [r1, #24] means  r2 = *((uint32_t*)(r1 + 24));
+
+
+
+LDMIA:
+
+Load Multiple Increment After
+
+
+LDMIA Rn!, {register list..}
+        ▲
+        │
+        ! → Rn automaticly updating (writeback)
+
+Exp:
+
+ldmia r1!, {r4-r11}
+means:
+start from r1 adres:
+r4  ← [r1+0]
+r5  ← [r1+4]
+r6  ← [r1+8]
+r7  ← [r1+12]
+r8  ← [r1+16]
+r9  ← [r1+20]
+r10 ← [r1+24]
+r11 ← [r1+28]
+r1  = r1 + 32   ← because of ! automaticly updated!!!
+
+
+STR:
+
+Store Register and from  register write to memory
+
+
+STR Rd, [Rn, #offset]
+     ▲    ▲    ▲
+     │    │    └── how many bytes forward
+     │    └─────── base address
+     └──────────── value to memory
+Exp:
+
+str r0, [r1, #-4]! # First decremtn r1 and write !!
+
+
+MOV:
+
+Write to register
+
+MOV Rd, #değer
+     ▲    ▲
+     │    └── constant value (immediate)
+     └─────── destination register
+
+
+Exp:
+mov r0, #2 # Write 2 to register.
+
+
+
+MRS / MSR :
+
+Move from/to Special Register
+
+**Note** This insturction will not work on Thread mode ignoring. It MUST be on Priviliged mode. CONTROL[nPRIV] bit must set to 0!  we say before but want ed to say again :)
+
+MRS Rd, special
+     ▲    ▲
+     │    └── which register
+     └─────── where is result
+Exp:
+
+msr psp, r1       ; r1 -> PSP
+                  ; set tasks stack pointer
+
+mov r0, #2  
+msr control, r0   ; r0 -> CONTROL
+                  ; SPSEL=1, change to PSP
+
+As ı say before thise instruction is special MOV also writeing register but you cant write ro register with MOV!!!
+
+
+mov  r0, psp   <- wrong
+mrs  r0, psp   <- correct
+
+mov  psp, r1   <- wrong
+msr  psp, r1   <- correct
+
+
+
+
+
+ALIGNMENT:
+B1.5.7 Page:B1-647
