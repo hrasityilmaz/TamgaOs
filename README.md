@@ -3,13 +3,41 @@
 Bare-metal RTOS written in C and ARM assembly.  
 Started as a learning project — bootloaders, memory layouts, context switching, executable formats.
 
-![TamgaOS](images/tamgaos_rtos.gif)
+## ARM port — STM32H753ZI (Cortex-M7)
+
+![TamgaOS STM32H7](images/stm32_tamga.gif)
+
+**Boot**
+- Hand-written startup with I-Cache/D-Cache invalidate + enable sequence (PM0253)
+- Linker script (DTCM, AXI, SRAM1-4, BKPSRAM)
+- RCC init — HSI 64MHz and HSE/PLL1 480MHz
+
+**Kernel**
+- Preemptive scheduler (Cortex-M7 port)
+- PendSV context switch
+- PSP per-task isolation
+
+**Sync**
+- Mutex (LDREX/STREX)
+- Semaphore with priority-based wait queues
+- Critical section (cpsid/cpsie)
+
+**Drivers**
+- SysTick (1ms tick, AHB/8)
+- RCC (HSI 64MHz and HSE/PLL1 480MHz)
+- UART (USART3, 115200, Virtual COM via ST-Link)
+
+Still improving — development notes at https://auctra.app
+
+---
 
 ## ARM port — K64F (Cortex-M4)
 
+![TamgaOS K64F](images/tamgaos_rtos.gif)
+
 **Boot**
-- Startup file (hand-written)
-- Linker script (linker.ld)
+- Hand-written startup
+- Linker script
 - MCG clock init (120MHz)
 
 **Kernel**
@@ -23,29 +51,15 @@ Started as a learning project — bootloaders, memory layouts, context switching
 - Critical section (cpsid/cpsie)
 
 **Drivers**
-- PIT timer (32-bit, used as scheduler tick)
+- PIT timer (32-bit, scheduler tick)
 - UART
 - MCG
 
-## ARM port — STM32H753ZI (Cortex-M7)
-
-Work in progress — porting TamgaOS to the Nucleo-144 board.
-
-**Boot**
-- Startup file with I-Cache/D-Cache invalidate + enable sequence (PM0253)
-- Linker script (DTCM, AXI, SRAM1-4, BKPSRAM)
-- RCC init (HSI 64MHz)
-
-**Drivers**
-- SysTick (1ms tick)
-- RCC (HSI-64MHZ- and HSE-480Mhz-)  
-- UART (in progress)
-
-Still improving — development notes at https://auctra.app will be still not added 
+---
 
 ## x86 port — Zig & C kernel
 
-Experimental dual implementation for comparing low-level Zig vs C. Boots via Limine with a Multiboot2 header. Active development paused for x86 part. — focus is on ARM.
+Experimental dual implementation for comparing low-level Zig vs C. Boots via Limine with a Multiboot2 header. Active development paused — focus is on ARM.
 
 **Implemented**
 - GDT setup
@@ -62,7 +76,9 @@ C   -> TamgaOS __C__
        Kernel OK __C__
 ```
 
-![TamgaOS](images/tamgaos.gif)
+![TamgaOS x86](images/tamgaos.gif)
+
+---
 
 ## Build
 
