@@ -8,7 +8,7 @@ static volatile uint8_t  s_tx_buf[UART_TX_BUF_SIZE];
 static volatile uint32_t s_tx_head;
 static volatile uint32_t s_tx_tail;
 
-void uart0_init(uint32_t baud) {
+void uart_init(uint32_t baud) {
   SIM->SCGC4 |= SIM_SCGC4_UART0_MASK;
   SIM->SCGC5 |= SIM_SCGC5_PORTB_MASK;
   SIM->SOPT2 = (SIM->SOPT2 & ~SIM_SOPT2_UART0SRC_MASK) |
@@ -41,7 +41,7 @@ void UART0_RX_TX_IRQHandler(void) {
   }
 }
 
-void uart0_putc(char c) {
+void uart_putc(char c) {
   uint32_t next_head = (s_tx_head + 1U) % UART_TX_BUF_SIZE;
   while (next_head == s_tx_tail) {}
   s_tx_buf[s_tx_head] = (uint8_t)c;
@@ -49,10 +49,10 @@ void uart0_putc(char c) {
   UART0->C2 |= (1U << 7U);
 }
 
-void uart0_puts(const char *s) {
+void uart_puts(const char *s) {
   while (*s != '\0') {
     if (*s == '\n') uart0_putc('\r');
-    uart0_putc(*s);
+    uart_putc(*s);
     s++;
   }
 }
