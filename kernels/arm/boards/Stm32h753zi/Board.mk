@@ -1,7 +1,8 @@
 CPU_FLAGS  = -mcpu=cortex-m7
 CPU_FLAGS += -mthumb
-# CPU_FLAGS += -mfpu=fpv5-d16
-CPU_FLAGS += -mfloat-abi=soft
+CPU_FLAGS += -mfpu=fpv5-d16
+CPU_FLAGS += -mfloat-abi=hard
+# CPU_FLAGS += -mfloat-abi=soft
 
 STARTUP      = boards/stm32h753zi/startup_stm32h753zi.s
 LDSCRIPT     = boards/stm32h753zi/linker.ld
