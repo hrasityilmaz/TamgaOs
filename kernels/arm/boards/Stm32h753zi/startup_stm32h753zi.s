@@ -277,6 +277,14 @@ Reset_Handler:
     dsb
     isb
 
+     /* ── 3.5. FPU enable — CPACR CP10/CP11 full access ── */
+    ldr  r0, =0xE000ED88
+    ldr  r1, [r0]
+    orr  r1, r1, #(0xF << 20)
+    str  r1, [r0]
+    dsb
+    isb
+    
     /* ── 4. Copy .data: Flash → DTCM ── */
     ldr  r0, =_data_start
     ldr  r1, =_data_end
