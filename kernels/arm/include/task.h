@@ -7,7 +7,7 @@
 // 2KB x 8
 //
 #define TASK_MAX (8U)
-#define TASK_STACK_SIZE (512U)
+#define TASK_STACK_SIZE (640U)
 
 #define TASK_PRIORITY_HIGH (0U)
 #define TASK_PRIORITY_NORMAL (1U)
