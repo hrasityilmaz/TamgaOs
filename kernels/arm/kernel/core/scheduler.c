@@ -32,22 +32,25 @@ static inline void trigger_pendsv(void) {
 
 static uint32_t *task_stack_init(uint32_t *stack_top, void (*func)(void)) {
   stack_top = (uint32_t *)((uint32_t)stack_top & ~0x7UL);
-  *(--stack_top) = 0x01000000UL;
-  *(--stack_top) = (uint32_t)func | 1U;
-  *(--stack_top) = 0xFFFFFFFDUL;
-  *(--stack_top) = 0x00000000UL;
-  *(--stack_top) = 0x00000000UL;
-  *(--stack_top) = 0x00000000UL;
-  *(--stack_top) = 0x00000000UL;
-  *(--stack_top) = 0x00000000UL;
-  *(--stack_top) = 0x00000000UL;
-  *(--stack_top) = 0x00000000UL;
-  *(--stack_top) = 0x00000000UL;
-  *(--stack_top) = 0x00000000UL;
-  *(--stack_top) = 0x00000000UL;
-  *(--stack_top) = 0x00000000UL;
-  *(--stack_top) = 0x00000000UL;
-  *(--stack_top) = 0x00000000UL;
+  /* Exception frame (hardware auto-save on exception entry) */
+  *(--stack_top) = 0x01000000UL;        /* xPSR — Thumb bit */
+  *(--stack_top) = (uint32_t)func | 1U; /* PC */
+  *(--stack_top) = 0xFFFFFFFDUL;        /* LR — return to thread */
+  *(--stack_top) = 0x00000000UL;        /* R12 */
+  *(--stack_top) = 0x00000000UL;        /* R3 */
+  *(--stack_top) = 0x00000000UL;        /* R2 */
+  *(--stack_top) = 0x00000000UL;        /* R1 */
+  *(--stack_top) = 0x00000000UL;        /* R0 */
+  /* Manual save: R4-R11 + LR (EXC_RETURN) — FreeRTOS style */
+  *(--stack_top) = 0xFFFFFFFDUL;        /* LR = EXC_RETURN (PSP, Thread, no FPU) */
+  *(--stack_top) = 0x00000000UL;        /* R11 */
+  *(--stack_top) = 0x00000000UL;        /* R10 */
+  *(--stack_top) = 0x00000000UL;        /* R9 */
+  *(--stack_top) = 0x00000000UL;        /* R8 */
+  *(--stack_top) = 0x00000000UL;        /* R7 */
+  *(--stack_top) = 0x00000000UL;        /* R6 */
+  *(--stack_top) = 0x00000000UL;        /* R5 */
+  *(--stack_top) = 0x00000000UL;        /* R4 */
   return stack_top;
 }
 
