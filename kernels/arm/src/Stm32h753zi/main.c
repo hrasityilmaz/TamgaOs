@@ -26,43 +26,42 @@ static void board_init(void)
     GPIOE_ODR &= ~LD2_PIN;
 }
 
-void task_led_green(void)
+/* Task A — float accumulates up, should always increase */
+void task_float_a(void)
 {
+    float val = 0.0f;
     while (1) {
-        GPIOB_ODR |=  LD1_PIN;
+        val += 0.1f;
+        GPIOB_ODR ^= LD1_PIN;
         sched_delay_ms(500U);
-        GPIOB_ODR &= ~LD1_PIN;
-        sched_delay_ms(500U);
+        int i = (int)val;
+        int f = (int)((val - (float)i) * 1000.0f);
+        if (f < 0) f = -f;
+        uart_printf("[A] %d.%d\r\n", i, f);
     }
 }
 
+/* Task B — float decreases down, should always decrease */
+void task_float_b(void)
+{
+    float val = 100.0f;
+    while (1) {
+        val -= 0.3f;
+        GPIOB_ODR ^= LD3_PIN;
+        sched_delay_ms(700U);
+        int i = (int)val;
+        int f = (int)((val - (float)i) * 1000.0f);
+        if (f < 0) f = -f;
+        uart_printf("[B] %d.%d\r\n", i, f);
+    }
+}
+
+/* Task LED — no float */
 void task_led_yellow(void)
 {
     while (1) {
-        GPIOE_ODR |=  LD2_PIN;
-        sched_delay_ms(300U);
-        GPIOE_ODR &= ~LD2_PIN;
-        sched_delay_ms(300U);
-    }
-}
-
-void task_led_red(void)
-{
-    while (1) {
-        GPIOB_ODR |=  LD3_PIN;
-        sched_delay_ms(700U);
-        GPIOB_ODR &= ~LD3_PIN;
-        sched_delay_ms(700U);
-    }
-}
-
-void task_uart(void)
-{
-    int cnt = 0;
-    while (1) {
-        cnt++;
-        uart_printf("[UART] tick = %d\r\n", cnt);
-        sched_delay_ms(1000U);
+        GPIOE_ODR ^= LD2_PIN;
+        sched_delay_ms(250U);
     }
 }
 
@@ -74,14 +73,13 @@ int main(void)
     uart_init();
 
     uart_puts("TamgaOS STM32H753ZI @ 480MHz\r\n");
-    uart_puts("FreeRTOS-style context switch test\r\n");
+    uart_puts("FPU context isolation test\r\n");
 
     sched_init();
 
-    sched_task_create(task_led_green,  TASK_PRIORITY_NORMAL);
+    sched_task_create(task_float_a,    TASK_PRIORITY_NORMAL);
+    sched_task_create(task_float_b,    TASK_PRIORITY_NORMAL);
     sched_task_create(task_led_yellow, TASK_PRIORITY_NORMAL);
-    sched_task_create(task_led_red,    TASK_PRIORITY_NORMAL);
-    sched_task_create(task_uart,       TASK_PRIORITY_LOW);
 
     sched_start();
 
