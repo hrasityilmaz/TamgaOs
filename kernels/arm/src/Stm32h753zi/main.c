@@ -11,9 +11,9 @@
 #define GPIOE_MODER (*(volatile uint32_t *)0x58021000U)
 #define GPIOE_ODR   (*(volatile uint32_t *)0x58021014U)
 
-#define LD1_PIN (1UL << 0U)    /* PB0  green  */
-#define LD2_PIN (1UL << 1U)    /* PE1  yellow */
-#define LD3_PIN (1UL << 14U)   /* PB14 red    */
+#define LD1_PIN (1UL << 0U)
+#define LD2_PIN (1UL << 1U)
+#define LD3_PIN (1UL << 14U)
 
 static void board_init(void)
 {
@@ -26,42 +26,43 @@ static void board_init(void)
     GPIOE_ODR &= ~LD2_PIN;
 }
 
-static void task_led_green(void)
+void task_led_green(void)
 {
     while (1) {
         GPIOB_ODR |=  LD1_PIN;
-        sched_delay_ms(50U);
+        sched_delay_ms(500U);
         GPIOB_ODR &= ~LD1_PIN;
-        sched_delay_ms(50U);
+        sched_delay_ms(500U);
     }
 }
 
-static void task_led_yellow(void)
+void task_led_yellow(void)
 {
     while (1) {
         GPIOE_ODR |=  LD2_PIN;
-        sched_delay_ms(50U);
+        sched_delay_ms(300U);
         GPIOE_ODR &= ~LD2_PIN;
-        sched_delay_ms(50U);
+        sched_delay_ms(300U);
     }
 }
 
-static void task_led_red(void)
+void task_led_red(void)
 {
     while (1) {
         GPIOB_ODR |=  LD3_PIN;
-        sched_delay_ms(50U);
+        sched_delay_ms(700U);
         GPIOB_ODR &= ~LD3_PIN;
-        sched_delay_ms(50U);
+        sched_delay_ms(700U);
     }
 }
 
-static void task_uart_test(void) {
-    uint32_t cnt = 0U;
-    for (;;) {
+void task_uart(void)
+{
+    int cnt = 0;
+    while (1) {
         cnt++;
-        uart_printf("[UART] tick = %u\r\n", cnt);
-        sched_delay_ms(1200U);
+        uart_printf("[UART] tick = %d\r\n", cnt);
+        sched_delay_ms(1000U);
     }
 }
 
@@ -73,16 +74,15 @@ int main(void)
     uart_init();
 
     uart_puts("TamgaOS STM32H753ZI @ 480MHz\r\n");
-    uart_puts("3 LED blink and 1 UART @ 50ms independent\r\n");
+    uart_puts("FreeRTOS-style context switch test\r\n");
 
     sched_init();
 
     sched_task_create(task_led_green,  TASK_PRIORITY_NORMAL);
     sched_task_create(task_led_yellow, TASK_PRIORITY_NORMAL);
     sched_task_create(task_led_red,    TASK_PRIORITY_NORMAL);
-    sched_task_create(task_uart_test, TASK_PRIORITY_LOW);
+    sched_task_create(task_uart,       TASK_PRIORITY_LOW);
 
-    //systick_sched_enable();
     sched_start();
 
     return 0;
