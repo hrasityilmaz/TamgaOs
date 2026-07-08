@@ -26,6 +26,10 @@ Started as a learning project — bootloaders, memory layouts, context switching
 - SysTick (1ms tick, AHB/8)
 - RCC (HSI 64MHz and HSE/PLL1 480MHz)
 - UART (USART3, 115200, Virtual COM via ST-Link)
+- I2C (I2C1 PB8/PB9 AF4)
+
+**Sensors**
+- MPU6050
 
 Still improving — development notes at https://auctra.app
 
