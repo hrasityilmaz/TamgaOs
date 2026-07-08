@@ -20,8 +20,12 @@ C_SRCS  += drivers/stm32h753zi/uart.c
 
 C_SRCS  += drivers/stm32h753zi/rcc.c
 C_SRCS += drivers/stm32h753zi/systick.c
+C_SRCS += drivers/stm32h753zi/i2c.c
 C_SRCS += src/stm32h753zi/main.c
+C_SRCS += sensors/mpu6050.c
+
 
 PYOCD_TARGET = stm32h743xx
 # CFLAGS += -Ikernels/arm/drivers/stm32h753zi
 BOARD_INCLUDES += -Iinclude/stm32h753zi
+BOARD_INCLUDES += -Iinclude/sensors
