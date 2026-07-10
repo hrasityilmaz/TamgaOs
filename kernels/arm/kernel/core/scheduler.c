@@ -4,10 +4,10 @@
 #include <stddef.h>
 
 task_t *volatile g_current_task;
-static volatile uint8_t s_started = 0U;
+task_t *volatile g_next_task;
+static volatile uint8_t s_started;
 
 uint8_t sched_is_started(void) { return s_started; }
-task_t *volatile g_next_task;
 
 static uint8_t s_task_count;
 static task_t s_tasks[TASK_MAX];
@@ -17,6 +17,40 @@ static task_t s_idle_tcb;
 #define PENDSVSET (1UL << 28U)
 #define SCB_SHP_PENDSV (*(volatile uint8_t *)0xE000ED22U)
 #define SCB_SHP_SYSTICK (*(volatile uint8_t *)0xE000ED23U)
+
+// MPU AREA TEST
+// TODO MUST CONTROL TEST !!!
+#define MPU_CTRL   (*(volatile uint32_t *)0xE000ED94U)
+#define MPU_RNR    (*(volatile uint32_t *)0xE000ED98U)
+#define MPU_RBAR   (*(volatile uint32_t *)0xE000ED9CU)
+#define MPU_RASR   (*(volatile uint32_t *)0xE000EDA0U)
+
+#define MPU_CTRL_ENABLE      (1UL << 0U)
+#define MPU_CTRL_PRIVDEFENA  (1UL << 2U)  
+#define STACK_GUARD_REGION   7U
+
+static void mpu_init_stack_guard(void) {
+  MPU_CTRL = 0U;
+  MPU_CTRL = MPU_CTRL_ENABLE | MPU_CTRL_PRIVDEFENA;
+  __asm volatile("dsb");
+  __asm volatile("isb");
+}
+
+static void mpu_set_stack_guard(task_t *t) {
+  uint32_t base = (uint32_t)&t->stack[0];  // Must be 32Bytes aligned !!!
+
+  MPU_RNR = STACK_GUARD_REGION;
+  MPU_RBAR = base;
+  MPU_RASR = (1UL << 28)   // XN: execute never
+           | (0UL << 24)   // AP=000
+           | (4UL << 1)    // SIZE=4 -> 2^(4+1)=32 byte
+           | (1UL << 0);
+  __asm volatile("dsb");
+  __asm volatile("isb");
+}
+
+// END OF MPU 
+
 
 static void idle_task_func(void) {
   while (1) {
@@ -30,31 +64,34 @@ static inline void trigger_pendsv(void) {
   __asm volatile("isb");
 }
 
-static uint32_t *task_stack_init(uint32_t *stack_top, void (*func)(void)) {
-  stack_top = (uint32_t *)((uint32_t)stack_top & ~0x7UL);
-  /* Exception frame (hardware auto-save on exception entry) */
-  *(--stack_top) = 0x01000000UL;        /* xPSR — Thumb bit */
-  *(--stack_top) = (uint32_t)func | 1U; /* PC */
-  *(--stack_top) = 0xFFFFFFFDUL;        /* LR — return to thread */
-  *(--stack_top) = 0x00000000UL;        /* R12 */
-  *(--stack_top) = 0x00000000UL;        /* R3 */
-  *(--stack_top) = 0x00000000UL;        /* R2 */
-  *(--stack_top) = 0x00000000UL;        /* R1 */
-  *(--stack_top) = 0x00000000UL;        /* R0 */
-  /* Manual save: R4-R11 + LR (EXC_RETURN) — FreeRTOS style */
-  *(--stack_top) = 0xFFFFFFFDUL;        /* LR = EXC_RETURN (PSP, Thread, no FPU) */
-  *(--stack_top) = 0x00000000UL;        /* R11 */
-  *(--stack_top) = 0x00000000UL;        /* R10 */
-  *(--stack_top) = 0x00000000UL;        /* R9 */
-  *(--stack_top) = 0x00000000UL;        /* R8 */
-  *(--stack_top) = 0x00000000UL;        /* R7 */
-  *(--stack_top) = 0x00000000UL;        /* R6 */
-  *(--stack_top) = 0x00000000UL;        /* R5 */
-  *(--stack_top) = 0x00000000UL;        /* R4 */
-  return stack_top;
+static uint32_t *task_stack_init(uint32_t *sp, void (*func)(void))
+{
+  sp = (uint32_t *)((uintptr_t)sp & ~0x7);
+  // Hardware stack 
+  *(--sp) = 0x01000000;          // xPSR
+  *(--sp) = (uint32_t)func | 1;  // PC
+  *(--sp) = 0xFFFFFFFD;          // LR (no FPU)
+  *(--sp) = 0;                   // R12
+  *(--sp) = 0;                   // R3
+  *(--sp) = 0;                   // R2
+  *(--sp) = 0;                   // R1
+  *(--sp) = 0;                   // R0
+  // Software frame
+  *(--sp) = 0xFFFFFFFD;          // EXC_RETURN (no FPU)
+  *(--sp) = 0;                   // R11
+  *(--sp) = 0;                   // R10
+  *(--sp) = 0;                   // R9
+  *(--sp) = 0;                   // R8
+  *(--sp) = 0;                   // R7
+  *(--sp) = 0;                   // R6
+  *(--sp) = 0;                   // R5
+  *(--sp) = 0;                   // R4
+
+  return sp;
 }
 
 void sched_init(void) {
+  mpu_init_stack_guard();
   g_current_task = (task_t *)0U;
   g_next_task = (task_t *)0U;
   s_task_count = 0U;
@@ -65,6 +102,7 @@ void sched_init(void) {
   s_idle_tcb.func = idle_task_func;
   s_idle_tcb.sp =
       task_stack_init(&s_idle_tcb.stack[TASK_STACK_SIZE], idle_task_func);
+  s_idle_tcb.stack[8] = 0xDEADBEEFU;
 }
 
 int8_t sched_task_create(void (*func)(void), uint8_t priority) {
@@ -77,6 +115,7 @@ int8_t sched_task_create(void (*func)(void), uint8_t priority) {
   t->state = TASK_READY;
   t->delay_ticks = 0U;
   t->sp = task_stack_init(&t->stack[TASK_STACK_SIZE], func);
+  t->stack[8] = 0xDEADBEEFU; // canary
   s_task_count++;
   sched_critical_exit(p);
   return (int8_t)(s_task_count - 1U);
@@ -110,6 +149,20 @@ static task_t *sched_select_next(void) {
   return chosen;
 }
 
+// Select the new one and choose this as RUNNING
+// TODO : control needed !!!!
+static void sched_commit_next(void) {
+  if (g_next_task != NULL && g_next_task != g_current_task &&
+      g_next_task->state == TASK_RUNNING) {
+    g_next_task->state = TASK_READY;
+  }
+  g_next_task = sched_select_next();
+  if (g_next_task->state == TASK_READY) {
+    g_next_task->state = TASK_RUNNING;
+  }
+  mpu_set_stack_guard(g_next_task);
+}
+
 void sched_tick(void) {
   for (uint8_t i = 0U; i < s_task_count; i++) {
     task_t *t = &s_tasks[i];
@@ -119,7 +172,10 @@ void sched_tick(void) {
         t->state = TASK_READY;
     }
   }
-  g_next_task = sched_select_next();
+  if (g_current_task != NULL && g_current_task->state == TASK_RUNNING) {
+    g_current_task->state = TASK_READY;
+  }
+  sched_commit_next();
   if (g_next_task != g_current_task)
     trigger_pendsv();
 }
@@ -131,7 +187,7 @@ void sched_delay_ms(uint32_t ms) {
   uint32_t p = sched_critical_enter();
   g_current_task->delay_ticks = ms;
   g_current_task->state = TASK_BLOCKED;
-  g_next_task = sched_select_next();
+  sched_commit_next();
   sched_critical_exit(p);
 
   trigger_pendsv();
@@ -166,7 +222,7 @@ void sched_yield(void) {
   uint32_t p = sched_critical_enter();
   if (g_current_task != NULL) {
     g_current_task->state = TASK_READY;
-    g_next_task = sched_select_next();
+    sched_commit_next();
   }
   sched_critical_exit(p);
   trigger_pendsv();
@@ -178,9 +234,14 @@ static task_t *sched_pick_and_mark(void) {
   if (g_current_task != NULL && g_current_task->state == TASK_RUNNING) {
     g_current_task->state = TASK_READY;
   }
-  task_t *next = sched_select_next();
-  next->state = TASK_RUNNING;
-  return next;
+  sched_commit_next();
+  return g_next_task;
+}
+
+// central otherwise forgotting !!
+void sched_block_locked(void) {
+  g_next_task = sched_pick_and_mark();
+  trigger_pendsv();
 }
 
 void sched_block(void) {
@@ -197,6 +258,7 @@ void sched_start(void) {
   g_current_task = sched_select_next();
   g_next_task = g_current_task;
   g_current_task->state = TASK_RUNNING;
+  mpu_set_stack_guard(g_current_task);
   sched_start_asm(g_current_task);
   while (1) {
   }
@@ -205,11 +267,26 @@ void sched_start(void) {
 void sched_wake_task(task_t *t) {
   if (t == NULL)
     return;
-
+  uint32_t p = sched_critical_enter();
   t->wait_next = NULL;
   t->delay_ticks = 0U;
   t->state = TASK_READY;
-  g_next_task = sched_select_next();
+  if (g_current_task != NULL && g_current_task->state == TASK_RUNNING) {
+    g_current_task->state = TASK_READY;
+  }
+  sched_commit_next();
+  sched_critical_exit(p);
   if (g_next_task != g_current_task)
     trigger_pendsv();
+}
+
+uint8_t sched_check_stack_canaries(void) {
+  uint8_t corrupted = 0xFFU; /* 0xFF = ALL OK */
+  for (uint8_t i = 0U; i < s_task_count; i++) {
+    if (s_tasks[i].stack[8] != 0xDEADBEEFU) {
+      corrupted = i;
+      break;
+    }
+  }
+  return corrupted;
 }
