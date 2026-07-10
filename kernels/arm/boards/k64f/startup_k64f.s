@@ -16,7 +16,7 @@ _vectors:
     .word  0
     .word  0
     .word  0
-    .word  Default_Handler
+    .word  SVC_Handler
     .word  Default_Handler
     .word  0
     .word  PendSV_Handler
@@ -188,6 +188,12 @@ PendSV_Handler:
 .thumb_func
 .global HardFault_Handler
 HardFault_Handler:
+    b    Default_Handler
+
+.weak SVC_Handler
+.thumb_func
+.global SVC_Handler
+SVC_Handler:
     b    Default_Handler
 
 .end
