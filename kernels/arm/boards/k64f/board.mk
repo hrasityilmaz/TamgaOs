@@ -13,6 +13,7 @@ AS_SRCS += kernel/arch/cortex_m4/pendsv_handler.s
 
 C_SRCS  += kernel/core/scheduler.c
 C_SRCS  += drivers/k64f/pit.c drivers/k64f/uart.c drivers/k64f/mcg.c kernel/core/mutex.c kernel/core/semaphore.c
+C_SRCS += kernel/core/hardfault.c
 C_SRCS += src/k64f/main.c
 
 PYOCD_TARGET = k64f
