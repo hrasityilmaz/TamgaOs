@@ -52,8 +52,6 @@ static void task_led_blue(void) {
   }
 }
 
-/* Ayni mutex'i farkli oncelikte yarisan iki task - priority inversion
- * senaryosunu ve mutex_lock/unlock'un race-free calistigini test eder */
 static void task_uart_low(void) {
   while (1) {
     mutex_lock(&g_test_mutex);
@@ -76,9 +74,6 @@ static void task_uart_high(void) {
   }
 }
 
-/* Bagimsiz, kimseyle senkronize olmayan bir zamanlayici task —
- * round-robin/preemption'in diger senkronizasyonlu task'lari
- * etkilemedigini dogrulamak icin */
 static void task_heartbeat(void) {
   uint32_t count = 0U;
   while (1) {
@@ -89,7 +84,6 @@ static void task_heartbeat(void) {
   }
 }
 
-/* Bu board'un uart.c'sinde uart_print_int yok, basit bir yardimci yeter */
 static void uart_print_uint(const char *prefix, uint32_t val) {
   char buf[12];
   int i = 11;
@@ -109,7 +103,7 @@ static void uart_print_uint(const char *prefix, uint32_t val) {
   uart_puts("\r\n");
 }
 
-/* Stack canary watchdog — her task'in stack[8]'ini periyodik kontrol eder.
+/* Stack canary watchdog
  * (kernel/core/scheduler.c: sched_check_stack_canaries) */
 static void task_watchdog(void) {
   while (1) {
@@ -142,7 +136,7 @@ int main(void) {
   sched_task_create(task_watchdog,  TASK_PRIORITY_LOW);
 
   pit_init(1000U);
-  pit_sched_enable();
+  pit_sched_enable();  // Later will fix seperate enable call !! (for m7 port dont need to call)
 
   uart_puts("Starting scheduler...\r\n");
   sched_start();
