@@ -16,6 +16,7 @@ Started as a learning project — bootloaders, memory layouts, context switching
 - Preemptive scheduler (Cortex-M7 port)
 - PendSV context switch
 - PSP per-task isolation
+- FPU context switching (fpv5-d16, lazy stacking via EXC_RETURN)
 
 **Sync**
 - Mutex (LDREX/STREX)
@@ -48,6 +49,7 @@ Still improving — development notes at https://auctra.app
 - Preemptive scheduler
 - PendSV context switch
 - PSP per-task isolation
+- FPU context switching **Still implementing**
 
 **Sync**
 - Mutex (LDREX/STREX)
