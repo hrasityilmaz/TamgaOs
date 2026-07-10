@@ -19,4 +19,6 @@ void sched_tick(void);
 void sched_wake_task(task_t *t);
 void sched_block(void);
 uint8_t sched_is_started(void);
+void sched_block_locked(void);
+uint8_t sched_check_stack_canaries(void);
 #endif
