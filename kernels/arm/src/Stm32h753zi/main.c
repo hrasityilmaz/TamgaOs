@@ -3,11 +3,13 @@
 #include "uart.h"
 #include "scheduler.h"
 #include "task.h"
+#include "mutex.h"
 //#include <stdint.h>
-#include "i2c.h"
-#include "mpu6050.h"
+//#include "i2c.h"
+//#include "mpu6050.h"
 
 
+static mutex_t g_uart_mutex;
 
 #define RCC_AHB4ENR (*(volatile uint32_t *)0x580244E0U)
 #define GPIOB_MODER (*(volatile uint32_t *)0x58020400U)
@@ -37,55 +39,62 @@ static void board_init(void)
 }
 
 
+/*
 void task_imu(void)
 {
     mpu6050_data_t data;
     while (1) {
         sched_delay_ms(10U);
         if (mpu6050_read(&data) == 0) {
-            uart_printf("AX:%d  AY:%d  AZ:%d  |  GX:%d  GY:%d  GZ:%d\r\n",
-                        data.accel_x, data.accel_y, data.accel_z,
-                        data.gyro_x,  data.gyro_y,  data.gyro_z);
+            uart_print_imu(data.accel_x, data.accel_y, data.accel_z,
+               data.gyro_x,  data.gyro_y,  data.gyro_z);
         }
     }
 }
+*/
 
 
 /* Task A — float accumulates up, should always increase */
-/*
+
 void task_float_a(void)
 {
+    uart_puts("A\r\n");
     float val = 0.0f;
     while (1) {
         val += 0.1f;
         GPIOB_ODR ^= LD1_PIN;
-        sched_delay_ms(500U);
         int i = (int)val;
         int f = (int)((val - (float)i) * 1000.0f);
         if (f < 0) f = -f;
-        uart_printf("[A] %d.%d\r\n", i, f);
+        mutex_lock(&g_uart_mutex);
+        uart_print_2int("[A] ", i, "\r\n", f);
+        mutex_unlock(&g_uart_mutex);
+        sched_delay_ms(500U);
+        //for(volatile uint32_t i=0;i<10000000;i++);
     }
 }
-*/
+
 /* Task B — float decreases down, should always decrease */
-/*
+
 void task_float_b(void)
 {
     float val = 100.0f;
     while (1) {
         val -= 0.3f;
         GPIOB_ODR ^= LD3_PIN;
-        sched_delay_ms(700U);
         int i = (int)val;
         int f = (int)((val - (float)i) * 1000.0f);
         if (f < 0) f = -f;
-        uart_printf("[B] %d.%d\r\n", i, f);
+        mutex_lock(&g_uart_mutex);
+        uart_print_2int("[B] ", i, "\r\n", f);
+        mutex_unlock(&g_uart_mutex);
+        sched_delay_ms(700U);
     }
 }
-*/
+
 
 /* Task LED — no float */
-/*
+
 void task_led_yellow(void)
 {
     while (1) {
@@ -93,8 +102,20 @@ void task_led_yellow(void)
         sched_delay_ms(250U);
     }
 }
-*/
 
+void task_watchdog(void) {
+  while (1) {
+    uint8_t bad = sched_check_stack_canaries();
+    if (bad != 0xFFU) {
+      uart_puts("!!! STACK OVERFLOW detected on task ");
+      uart_print_int("task_idx=", (int)bad);
+      while (1) { }
+    }
+    sched_delay_ms(100U);
+  }
+}
+
+/*
 void task_led_green(void)
 {
     while (1) {
@@ -102,7 +123,7 @@ void task_led_green(void)
         sched_delay_ms(500U);
     }
 }
- 
+
 void task_led_yellow(void)
 {
     while (1) {
@@ -110,7 +131,7 @@ void task_led_yellow(void)
         sched_delay_ms(300U);
     }
 }
- 
+
 void task_led_red(void)
 {
     while (1) {
@@ -118,6 +139,7 @@ void task_led_red(void)
         sched_delay_ms(700U);
     }
 }
+*/
 
 int main(void)
 {
@@ -125,19 +147,22 @@ int main(void)
     systick_init(480000000U);
     board_init();
     uart_init();
-    i2c_init();
+    //i2c_init();
+    mutex_init(&g_uart_mutex);
 
     uart_puts("TamgaOS STM32H753ZI @ 480MHz\r\n");
     //uart_puts("FPU context isolation test\r\n");
     //uart_puts("I2C MPU6050 Test");
-    uart_puts("MPU6050 raw data and 3 Led task together\r\n");
+    //uart_puts("MPU6050 raw data and 3 Led task together\r\n");
 
+    /*
     if (mpu6050_init() < 0) {
         uart_puts("MPU6050 init failed!\r\n");
         while (1) {}
     }
+    */
 
-    uart_puts("MPU6050 OK\r\n");
+    //uart_puts("MPU6050 OK\r\n");
 
     /*
     while (1) {
@@ -154,7 +179,7 @@ int main(void)
     /*
     uint8_t who = 0U;
     int8_t ret = i2c_read(MPU6050_ADDR, MPU6050_WHO_AM_I, &who, 1U);
-    
+
     if (ret < 0) {
         uart_puts("I2C error — check wiring\r\n");
     } else {
@@ -170,14 +195,15 @@ int main(void)
 
     sched_init();
 
-    //sched_task_create(task_float_a,    TASK_PRIORITY_NORMAL);
-    //sched_task_create(task_float_b,    TASK_PRIORITY_NORMAL);
-    //sched_task_create(task_led_yellow, TASK_PRIORITY_NORMAL);
-
-    sched_task_create(task_imu,        TASK_PRIORITY_HIGH); // flight data :)
-    sched_task_create(task_led_green,  TASK_PRIORITY_NORMAL);
+    sched_task_create(task_float_a,    TASK_PRIORITY_NORMAL);
+    sched_task_create(task_float_b,    TASK_PRIORITY_NORMAL);
     sched_task_create(task_led_yellow, TASK_PRIORITY_NORMAL);
-    sched_task_create(task_led_red,    TASK_PRIORITY_NORMAL);
+    sched_task_create(task_watchdog, TASK_PRIORITY_LOW);
+
+    //sched_task_create(task_imu,        TASK_PRIORITY_HIGH); // flight data :)
+    //sched_task_create(task_led_green,  TASK_PRIORITY_NORMAL);
+    //sched_task_create(task_led_yellow, TASK_PRIORITY_NORMAL);
+    //sched_task_create(task_led_red,    TASK_PRIORITY_NORMAL);
 
     sched_start();
 
