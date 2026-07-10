@@ -1,6 +1,8 @@
 CPU_FLAGS  = -mcpu=cortex-m4
 CPU_FLAGS += -mthumb
-CPU_FLAGS += -mfloat-abi=soft
+# CPU_FLAGS += -mfloat-abi=soft
+CPU_FLAGS += -mfpu=fpv4-sp-d16
+CPU_FLAGS += -mfloat-abi=hard
 
 STARTUP      = boards/k64f/startup_k64f.s
 LDSCRIPT     = boards/k64f/linker.ld
@@ -14,6 +16,7 @@ AS_SRCS += kernel/arch/cortex_m4/pendsv_handler.s
 C_SRCS  += kernel/core/scheduler.c
 C_SRCS  += drivers/k64f/pit.c drivers/k64f/uart.c drivers/k64f/mcg.c kernel/core/mutex.c kernel/core/semaphore.c
 C_SRCS += kernel/core/hardfault.c
+C_SRCS += src/k64f/fpu_test.c
 C_SRCS += src/k64f/main.c
 
 PYOCD_TARGET = k64f
