@@ -29,7 +29,7 @@ typedef struct task_s {
   uint32_t delay_ticks;
   void (*func)(void);
   struct task_s *wait_next;
-  uint32_t stack[TASK_STACK_SIZE];
+  uint32_t stack[TASK_STACK_SIZE] __attribute__((aligned(32)));
 } task_t;
 
 #endif
