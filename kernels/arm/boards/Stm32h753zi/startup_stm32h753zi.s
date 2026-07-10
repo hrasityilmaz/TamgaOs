@@ -38,7 +38,7 @@ _vectors:
     .word  0                        /* 8  reserved */
     .word  0                        /* 9  reserved */
     .word  0                        /* 10 reserved */
-    .word  Default_Handler          /* 11 SVCall */
+    .word  SVC_Handler               /* 11 SVCall */
     .word  Default_Handler          /* 12 DebugMonitor */
     .word  0                        /* 13 reserved */
     .word  PendSV_Handler           /* 14 PendSV */
