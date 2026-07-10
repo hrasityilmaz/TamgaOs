@@ -23,6 +23,7 @@ C_SRCS += drivers/stm32h753zi/systick.c
 C_SRCS += drivers/stm32h753zi/i2c.c
 C_SRCS += src/stm32h753zi/main.c
 C_SRCS += sensors/mpu6050.c
+C_SRCS += kernel/core/hardfault.c
 
 
 PYOCD_TARGET = stm32h743xx
