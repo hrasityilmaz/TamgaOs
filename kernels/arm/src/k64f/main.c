@@ -6,6 +6,7 @@
 #include "semaphore.h"
 #include "task.h"
 #include "uart.h"
+#include "fpu_test.h"
 
 #define LED_RED_PIN  (1UL << 22U)
 #define LED_BLUE_PIN (1UL << 21U)
@@ -26,7 +27,7 @@ static void board_init(void) {
   GPIOB->PSOR = LED_BLUE_PIN;
 }
 
-/* Semaphore el degistirmesi ile calisan iki LED task'i */
+// Semaphore led task 
 static void task_led_red(void) {
   while (1) {
     GPIOB->PCOR = LED_RED_PIN;
@@ -134,6 +135,9 @@ int main(void) {
   sched_task_create(task_uart_low,  TASK_PRIORITY_LOW);
   sched_task_create(task_heartbeat, TASK_PRIORITY_NORMAL);
   sched_task_create(task_watchdog,  TASK_PRIORITY_LOW);
+  sched_task_create(task_fpu_test_a, TASK_PRIORITY_NORMAL);
+  sched_task_create(task_fpu_test_b, TASK_PRIORITY_NORMAL);
+
 
   pit_init(1000U);
   pit_sched_enable();  // Later will fix seperate enable call !! (for m7 port dont need to call)
