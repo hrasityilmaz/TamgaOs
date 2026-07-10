@@ -7,23 +7,30 @@
 .thumb_func
 .type   sched_start_asm, %function
 
+/*
+ * sched_start_asm — ilk task'i baslatir.
+ * Gercek bir exception (SVC) tetiklemiyoruz; CONTROL register'ini
+ * elle Thread+PSP moduna ceviriyoruz ve dogrudan task fonksiyonuna
+ * ziplayoruz (bx r2). EXC_RETURN word'u task_stack_init() tarafindan
+ * konulmustur (kernel/core/scheduler.c, board-bagimsiz, tek format),
+ * burada sadece atlanip gecilir (kullanilmaz, cunku gercek bir
+ * exception-return yapmiyoruz).
+ */
 sched_start_asm:
     cpsid   i
-    ldr     r1, [r0, #0] 
-    ldmia   r1!, {r4-r11}
+    ldr     r1, [r0, #0]
+    ldmia   r1!, {r4-r11, r14}   /* R4-R11 + EXC_RETURN (r14, kullanilmiyor) */
     msr     psp, r1
     isb
     mov     r0, #2
     msr     control, r0
-    isb  /* if pending interrupt */
+    isb
     cpsie   i
     isb
-    
+
     /* r1: R0(0),R1(4),R2(8),R3(12),R12(16),LR(20),PC(24),xPSR(28) */
-    /* mrs r1, psp  */       
-    /* ldr r2, [r1, #24] */    
     ldr     r2, [r1, #24]
-    bx      r2 /* not bx lr !!!! */
+    bx      r2
 
 .size sched_start_asm, . - sched_start_asm
 .end
