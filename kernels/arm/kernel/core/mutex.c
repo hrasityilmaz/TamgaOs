@@ -54,7 +54,7 @@ void mutex_lock(mutex_t *m) {
     }
     g_current_task->state = TASK_BLOCKED;
     wq_insert(m, g_current_task);
-    sched_block_locked();        /* state+queue+next-seçim+PendSV tetikleme, hepsi kesme-kapalı */
+    sched_block_locked();        /* state+queue+next-seçim+PendSV trigger */
     sched_critical_exit(p);
     __asm volatile("dsb");
     __asm volatile("isb");
