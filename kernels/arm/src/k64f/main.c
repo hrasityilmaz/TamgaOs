@@ -7,76 +7,26 @@
 #include "task.h"
 #include "uart.h"
 
-#define LED_RED_PIN (1UL << 22U)
+#define LED_RED_PIN  (1UL << 22U)
 #define LED_BLUE_PIN (1UL << 21U)
 
 static mutex_t g_test_mutex;
-static sem_t g_sem_red_to_blue;
-static sem_t g_sem_blue_to_red;
-
-// static void disable_wdog(void) {
-//   WDOG->UNLOCK = WDOG_UNLOCK_KEY1;
-//   WDOG->UNLOCK = WDOG_UNLOCK_KEY2;
-//   WDOG->STCTRLH = WDOG_STCTRLH_DISABLE;
-// }
-
-// static void print_hex(const char *label, uint32_t val) {
-//   char buf[12];
-//   buf[0] = '0';
-//   buf[1] = 'x';
-//   buf[10] = '\r';
-//   buf[11] = '\n';
-//   for (int i = 9; i >= 2; i--) {
-//     uint8_t last = val & 0xFU; // 0xFF ?
-//     buf[i] = (last < 10U) ? ('0' + last) : ('A' + last - 10U);
-//     val >>= 4;
-//   }
-//   uart0_puts(label);
-//   uart0_puts(": ");
-//   for (int i = 0; i < 12; i++)
-//     uart0_putc(buf[i]);
-// }
-
-// static void disable_wdog(void) {
-//   WDOG->UNLOCK = WDOG_UNLOCK_KEY1;
-//   WDOG->UNLOCK = WDOG_UNLOCK_KEY2;
-//   WDOG->STCTRLH = WDOG_STCTRLH_DISABLE;
-// }
-//
+static sem_t   g_sem_red_to_blue;
+static sem_t   g_sem_blue_to_red;
 
 static void board_init(void) {
-  // red
+  /* red */
   SIM->SCGC5 |= SIM_SCGC5_PORTB_MASK;
   PORTB->PCR[22] = PORT_PCR_MUX(1U);
   GPIOB->PDDR |= LED_RED_PIN;
   GPIOB->PSOR = LED_RED_PIN;
-  // blue
+  /* blue */
   PORTB->PCR[21] = PORT_PCR_MUX(1U);
   GPIOB->PDDR |= LED_BLUE_PIN;
   GPIOB->PSOR = LED_BLUE_PIN;
 }
 
-static void task_led(void) {
-  while (1) {
-    // GPIOB->PCOR = LED_RED_PIN;
-    // sched_delay_ms(500U);
-    // GPIOB->PSOR = LED_RED_PIN;
-    // sched_delay_ms(500U);
-    GPIOB->PTOR |= LED_RED_PIN;
-    sched_delay_ms(50U);
-  }
-}
-
-// static void task_led_red(void) {
-//   while (1) {
-//     GPIOB->PCOR = LED_RED_PIN;
-//     sched_delay_ms(500U);
-//     GPIOB->PSOR = LED_RED_PIN;
-//     sem_give(&g_sem_red_to_blue);
-//     sem_take(&g_sem_blue_to_red);
-//   }
-// }
-
+/* Semaphore el degistirmesi ile calisan iki LED task'i */
 static void task_led_red(void) {
   while (1) {
     GPIOB->PCOR = LED_RED_PIN;
@@ -102,7 +52,9 @@ static void task_led_blue(void) {
   }
 }
 
-static void task_uart(void) {
+/* Ayni mutex'i farkli oncelikte yarisan iki task - priority inversion
+ * senaryosunu ve mutex_lock/unlock'un race-free calistigini test eder */
+static void task_uart_low(void) {
   while (1) {
     mutex_lock(&g_test_mutex);
     uart_puts("[LOW] locked\r\n");
@@ -113,7 +65,7 @@ static void task_uart(void) {
   }
 }
 
-static void high_task_uart(void) {
+static void task_uart_high(void) {
   while (1) {
     mutex_lock(&g_test_mutex);
     uart_puts("[HIGH] locked\r\n");
@@ -124,33 +76,70 @@ static void high_task_uart(void) {
   }
 }
 
+/* Bagimsiz, kimseyle senkronize olmayan bir zamanlayici task —
+ * round-robin/preemption'in diger senkronizasyonlu task'lari
+ * etkilemedigini dogrulamak icin */
+static void task_heartbeat(void) {
+  uint32_t count = 0U;
+  while (1) {
+    uart_puts("[HB] tick\r\n");
+    count++;
+    sched_delay_ms(1000U);
+    (void)count;
+  }
+}
+
+/* Bu board'un uart.c'sinde uart_print_int yok, basit bir yardimci yeter */
+static void uart_print_uint(const char *prefix, uint32_t val) {
+  char buf[12];
+  int i = 11;
+  buf[i] = '\0';
+  if (val == 0U) {
+    uart_puts(prefix);
+    uart_putc('0');
+    uart_puts("\r\n");
+    return;
+  }
+  while (val > 0U && i > 0) {
+    buf[--i] = (char)('0' + (val % 10U));
+    val /= 10U;
+  }
+  uart_puts(prefix);
+  uart_puts(&buf[i]);
+  uart_puts("\r\n");
+}
+
+/* Stack canary watchdog — her task'in stack[8]'ini periyodik kontrol eder.
+ * (kernel/core/scheduler.c: sched_check_stack_canaries) */
+static void task_watchdog(void) {
+  while (1) {
+    uint8_t bad = sched_check_stack_canaries();
+    if (bad != 0xFFU) {
+      uart_print_uint("!!! STACK OVERFLOW detected on task_idx=", (uint32_t)bad);
+      while (1) {
+      }
+    }
+    sched_delay_ms(100U);
+  }
+}
+
 int main(void) {
-  // disable_wdog();
   mcg_init_120mhz();
   uart_init(115200U);
-  uart_puts("TamgaOS booting...\r\n");
+  uart_puts("TamgaOS booting (stress test)...\r\n");
   board_init();
-
-  // uint32_t pc, lr, sp, xpsr;
-  //__asm volatile("mov %0, pc" : "=r"(pc));
-  //__asm volatile("mov %0, lr" : "=r"(lr));
-  //__asm volatile("mov %0, sp" : "=r"(sp));
-  //__asm volatile("mrs %0, xpsr" : "=r"(xpsr));
-
-  // print_hex("PC  ", pc);
-  // print_hex("LR  ", lr);
-  // print_hex("SP  ", sp);
-  // print_hex("xPSR", xpsr);
 
   sched_init();
   mutex_init(&g_test_mutex);
   sem_init(&g_sem_red_to_blue, 0, 1);
   sem_init(&g_sem_blue_to_red, 0, 1);
-  sched_task_create(task_led_red, TASK_PRIORITY_NORMAL);
-  sched_task_create(task_led_blue, TASK_PRIORITY_NORMAL);
-  // sched_task_create(task_led, TASK_PRIORITY_NORMAL);
-  sched_task_create(high_task_uart, TASK_PRIORITY_HIGH);
-  sched_task_create(task_uart, TASK_PRIORITY_LOW);
+
+  sched_task_create(task_led_red,   TASK_PRIORITY_NORMAL);
+  sched_task_create(task_led_blue,  TASK_PRIORITY_NORMAL);
+  sched_task_create(task_uart_high, TASK_PRIORITY_HIGH);
+  sched_task_create(task_uart_low,  TASK_PRIORITY_LOW);
+  sched_task_create(task_heartbeat, TASK_PRIORITY_NORMAL);
+  sched_task_create(task_watchdog,  TASK_PRIORITY_LOW);
 
   pit_init(1000U);
   pit_sched_enable();
