@@ -10,10 +10,10 @@ SIZE    = arm-none-eabi-size
 include boards/$(BOARD)/board.mk
 
 CFLAGS  = $(CPU_FLAGS)
-CFLAGS += -O0 -DNDEBUG #-O2 -DNDEBUG  # -O0 -g
+CFLAGS += -O0 -g #-O0 -DNDEBUG #-O2 -DNDEBUG  # -O0 -g
 CFLAGS += -Wall -Wextra
-CFLAGS += -ffunction-sections
-CFLAGS += -fdata-sections
+# CFLAGS += -ffunction-sections
+# CFLAGS += -fdata-sections
 CFLAGS += -std=gnu11
 CFLAGS += -Iinclude
 CFLAGS += -Iboards/$(BOARD)
@@ -26,6 +26,8 @@ ASFLAGS += -g
 LDFLAGS  = -T $(LDSCRIPT)
 LDFLAGS += -Wl,-Map=$(TARGET)_$(BOARD).map
 LDFLAGS += -nostartfiles
+LDFLAGS += -Wl,-u,sched_start_asm
+LDFLAGS += -Wl,-u,SVC_Handler
 
 
 # C_SRCS  += src/main.c
