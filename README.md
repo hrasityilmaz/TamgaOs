@@ -52,7 +52,6 @@ Still improving — development notes at https://auctra.app
 - PendSV context switch
 - PSP per-task isolation
 - FPU context switching (fpv4-sp-d16, lazy stacking via EXC_RETURN)
-- MPU-based stack overflow guard (hardware-enforced, MemManage/HardFault on violation)
 
 **Sync**
 - Mutex (LDREX/STREX)

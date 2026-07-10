@@ -135,6 +135,7 @@ int main(void) {
   sched_task_create(task_uart_low,  TASK_PRIORITY_LOW);
   sched_task_create(task_heartbeat, TASK_PRIORITY_NORMAL);
   sched_task_create(task_watchdog,  TASK_PRIORITY_LOW);
+  sched_task_create(task_mpu_violation_test, TASK_PRIORITY_NORMAL);
   sched_task_create(task_fpu_test_a, TASK_PRIORITY_NORMAL);
   sched_task_create(task_fpu_test_b, TASK_PRIORITY_NORMAL);
 
