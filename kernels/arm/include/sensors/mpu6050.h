@@ -4,7 +4,7 @@
 #include <stdint.h>
 
 /* MPU6050 I2C address */
-#define MPU6050_ADDR    0x69U   /* AD0=VCC if not 0x68 !! */
+#define MPU6050_ADDR    0x68U   /* AD0=GND if not 0x69 !! and if no connection changing !!! */
 
 typedef struct {
     int16_t accel_x;
