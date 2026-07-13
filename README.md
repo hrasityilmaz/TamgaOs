@@ -1,7 +1,18 @@
-# TamgaOS
+# TamgaOS (Yula)
 
 Bare-metal RTOS written in C and ARM assembly.  
 Started as a learning project — bootloaders, memory layouts, context switching, executable formats.
+
+## Kernel core (shared across all ARM boards)
+
+**Kernel**
+- Preemptive scheduler, PendSV context switch, PSP per-task isolation
+- FPU context switching (lazy stacking via EXC_RETURN; FPU variant differs per board — see below)
+
+**Sync**
+- Mutex (LDREX/STREX) with priority inheritance — elevates the lock owner's priority to match a higher-priority blocked waiter, preventing priority inversion; restores original priority on unlock
+- Semaphore with priority-based wait queues
+- Critical section (cpsid/cpsie)
 
 ## ARM port — STM32H753ZI (Cortex-M7)
 
@@ -16,12 +27,11 @@ Started as a learning project — bootloaders, memory layouts, context switching
 - Preemptive scheduler (Cortex-M7 port)
 - PendSV context switch
 - PSP per-task isolation
-- FPU context switching (fpv5-d16, lazy stacking via EXC_RETURN)
+- FPU context switching (fpv5-d16, double-precision, lazy stacking via EXC_RETURN)
 - MPU-based stack overflow guard (hardware-enforced, MemManage/HardFault on violation)
 
-
 **Sync**
-- Mutex (LDREX/STREX)
+- Mutex (LDREX/STREX) with priority inheritance — elevates the lock owner's priority to match a higher-priority blocked waiter, preventing priority inversion; restores original priority on unlock
 - Semaphore with priority-based wait queues
 - Critical section (cpsid/cpsie)
 
@@ -33,6 +43,9 @@ Started as a learning project — bootloaders, memory layouts, context switching
 
 **Sensors**
 - MPU6050
+
+**Tests**
+- `tests/test_mutex_priority_inheritance.c` — validates elevate/restore behavior under LOW/HIGH/MED priority contention
 
 Still improving — development notes at https://auctra.app
 
@@ -51,11 +64,11 @@ Still improving — development notes at https://auctra.app
 - Preemptive scheduler
 - PendSV context switch
 - PSP per-task isolation
-- FPU context switching (fpv4-sp-d16, lazy stacking via EXC_RETURN)
-- Stack overflow guard: software canary only (optional ARM Cortex-M MPU; hardware guard not yet implemented)
+- FPU context switching (fpv4-sp-d16, single-precision, lazy stacking via EXC_RETURN)
+- Stack overflow guard: software canary only (K64F MPU registers use a non-standard memory layout vs. the STM32H753ZI port; hardware guard planned for a future update)
 
 **Sync**
-- Mutex (LDREX/STREX)
+- Mutex (LDREX/STREX) with priority inheritance — elevates the lock owner's priority to match a higher-priority blocked waiter, preventing priority inversion; restores original priority on unlock
 - Semaphore with priority-based wait queues
 - Critical section (cpsid/cpsie)
 
