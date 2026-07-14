@@ -31,7 +31,7 @@ dt = 0.01;
 t_prev = tic;
 x = zeros(4,1);
 P = eye(4);
-% NOTE: F ve B from iteration
+% NOTE: F and B from iteration
 % with dt_real
 Q = diag([0.001, 0.001, 0.0001, 0.0001]);
 
@@ -79,7 +79,7 @@ try
       dt_real = dt;
     end
 
-  % Later noticed 2 times nias minus
+  % Later noticed 2 times bias minus
    %{
     F = [1  0  -dt_real  0;
          0  1   0  -dt_real;
@@ -140,8 +140,8 @@ pitchs = pitchs(1:N);
 
 printf("\Samples : %d\n", N);
 if N > 0
-  printf("Son Roll:  %.4f deg\n", rolls(N));
-  printf("Son Pitch: %.4f deg\n", pitchs(N));
+  printf("Last Roll:  %.4f deg\n", rolls(N));
+  printf("Last Pitch: %.4f deg\n", pitchs(N));
   printf("Gyro bias GX: %.6f rad/s\n", x(3));
   printf("Gyro bias GY: %.6f rad/s\n", x(4));
 end
