@@ -79,10 +79,15 @@ try
       dt_real = dt;
     end
 
+  % Later noticed 2 times nias minus
+   %{
     F = [1  0  -dt_real  0;
          0  1   0  -dt_real;
          0  0   1   0;
          0  0   0   1];
+   %}
+    % Now correct
+    F = eye(4);
     B = [dt_real  0;
           0  dt_real;
           0   0;
