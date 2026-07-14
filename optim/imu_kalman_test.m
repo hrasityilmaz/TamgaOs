@@ -129,7 +129,7 @@ try
     end
   end
 catch err
-  printf("Durduruldu / hata: %s\n", err.message);
+  printf("Stopped / error: %s\n", err.message);
 end_try_catch
 
 clear s;
