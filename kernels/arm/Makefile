@@ -29,7 +29,6 @@ LDFLAGS += -nostartfiles
 LDFLAGS += -Wl,-u,sched_start_asm
 LDFLAGS += -Wl,-u,SVC_Handler
 
-
 # C_SRCS  += src/main.c
 AS_SRCS += $(STARTUP)
 
@@ -41,7 +40,7 @@ all: $(TARGET)_$(BOARD).bin $(TARGET)_$(BOARD).hex
 	$(SIZE) $(TARGET)_$(BOARD).elf
 
 $(TARGET)_$(BOARD).elf: $(OBJS)
-	$(CC) $(CPU_FLAGS) $(LDFLAGS) $(OBJS) -o $@
+	$(CC) $(CPU_FLAGS) $(LDFLAGS) $(OBJS) -lm -o $@
 
 $(TARGET)_$(BOARD).bin: $(TARGET)_$(BOARD).elf
 	$(OBJCOPY) -O binary $< $@
