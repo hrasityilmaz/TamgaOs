@@ -86,7 +86,7 @@ printf('inside Body        = [%.4f, %.4f, %.4f]\n', p_b(1), p_b(2), p_b(3));
 
 % MUST BE SAME RESULT
 p_b_direct = R_b_v_num * p_v;
-printf('Body icinde (tek adimda R_b_v ile) = [%.4f, %.4f, %.4f]\n', p_b_direct(1), p_b_direct(2), p_b_direct(3));
+printf('inside Body (with R_b_v) = [%.4f, %.4f, %.4f]\n', p_b_direct(1), p_b_direct(2), p_b_direct(3));
 
 disp('Difference (must be zero !!) =')
 disp(p_b - p_b_direct)
