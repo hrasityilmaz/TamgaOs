@@ -1,5 +1,5 @@
 /*
- * main.c — IMU → Kalman → FDCAN pipeline
+ * main.c  IMU -> Kalman -> FDCAN pipeline
  *
  * task_imu  (HIGH)   : MPU6050 read -> Kalman -> pack CAN frame -> transmit
  * task_can  (NORMAL) : receive CAN frame -> UART print
