@@ -1,20 +1,6 @@
 /*
  * test_mpu_stack_guard.c — triggers the MPU stack-overflow guard
- * for real, by running INSIDE the scheduler (not from main()'s own
- * initial stack, where the guard is never active — see below).
- *
- * WHY THE EARLIER test_fault_handler.c COULDN'T TRIGGER THIS:
- * mpu_set_stack_guard() is only ever called from sched_commit_next()
- * and sched_start() (scheduler.c) — meaning the guard is only active
- * once the scheduler has actually switched into a real task. Calling
- * the recursive stack-burner directly from main(), before sched_init()
- * / sched_start() ran, meant there was no MPU region protecting
- * anything — the recursion just silently ate into the large (128K)
- * DTCM region with no guard to hit.
- *
- * This test instead creates one real task via sched_task_create(),
- * lets sched_start() arm the guard for it, and overflows THAT task's
- * own (much smaller, TASK_STACK_SIZE-word) stack from inside itself.
+ * for real, by running INSIDE the scheduler .
  */
 
 #include "rcc.h"
