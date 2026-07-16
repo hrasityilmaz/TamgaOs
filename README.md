@@ -40,12 +40,15 @@ Started as a learning project — bootloaders, memory layouts, context switching
 - RCC (HSI 64MHz and HSE/PLL1 480MHz)
 - UART (USART3, 115200, Virtual COM via ST-Link)
 - I2C (I2C1 PB8/PB9 AF4)
+- CAN ( PA11=RX (AF9), PA12=TX (AF9))  
 
 **Sensors**
 - MPU6050
 
 **Tests**
-- `tests/test_mutex_priority_inheritance.c` — validates elevate/restore behavior under LOW/HIGH/MED priority contention
+- `tests/test_mutex_priority_inheritance.c` - validates elevate/restore behavior under LOW/HIGH/MED priority contention
+- `tests/imu_kalman_fdcan.c` - imu kalman fdcan test   
+- `tests/test_fdcan1.c` - Standart loopback data going/coming test     
 
 Still improving — development notes at https://auctra.app
 
