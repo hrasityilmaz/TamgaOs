@@ -89,7 +89,7 @@ void task_imu(void)
     }
 }
 
-/* ── task_can: CAN RX → decode → UART ── */
+/*  task_can: CAN RX -> decode -> UART */
 void task_can(void)
 {
     fdcan_frame_t frame;
