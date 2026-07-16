@@ -1,15 +1,32 @@
 /*
- * main.c  IMU -> Kalman -> FDCAN pipeline
+ * src/stm32h753zi/main.c — TamgaOS production entry point
  *
- * task_imu  (HIGH)   : MPU6050 read -> Kalman -> pack CAN frame -> transmit
- * task_can  (NORMAL) : receive CAN frame -> UART print
- * task_led  (LOW)    : heartbeat LED
+ * Boot sequence:
+ *   1. Clocks (480MHz PLL1), SysTick, UART, I2C
+ *   2. fault_log_init() + report any crash from the previous run
+ *   3. iwdg_reset_was_watchdog() + report/clear the reset cause
+ *   4. MPU6050 + Kalman filter init
+ *   5. Arm IWDG (production safety net against a hung task)
+ *   6. Start the scheduler with:
+ *        - task_imu        (HIGH priority)   — sensor fusion, as before
+ *        - task_housekeep  (LOW priority)    — kicks IWDG periodically
  *
- * CAN frame layout (ID=0x100, DLC=8):
- *   byte[0..1] : roll  × 100  (int16_t, degrees × 100)
- *   byte[2..3] : pitch × 100  (int16_t, degrees × 100)
- *   byte[4..5] : gyro bias GX (int16_t, rad/s × 10000)
- *   byte[6..7] : gyro bias GY (int16_t, rad/s × 10000)
+ * WATCHDOG KICK DESIGN — READ BEFORE RELYING ON THIS IN THE FIELD:
+ * task_housekeep() below only proves the SCHEDULER itself is still
+ * alternating tasks; it does NOT prove task_imu (or any other future
+ * task) is still making real progress. A task_imu that's stuck in an
+ * infinite loop but not blocking the scheduler (e.g. spinning without
+ * yielding is a different failure — that WOULD starve housekeep too,
+ * so it's covered) would NOT be caught by this simple design if it's
+ * merely looping over bad data while still yielding normally.
+ *
+ * For genuine "prove critical work is happening" coverage, each
+ * critical task should periodically write a timestamp/heartbeat into
+ * a shared state, and task_housekeep() should only call iwdg_kick()
+ * if ALL monitored heartbeats have advanced recently — not just kick
+ * unconditionally on its own schedule. That's a reasonable next step
+ * once you have more than one critical task; keeping it simple here
+ * since task_imu is still the only real workload.
  */
 
 #include "rcc.h"
@@ -17,32 +34,40 @@
 #include "uart.h"
 #include "i2c.h"
 #include "mpu6050.h"
-#include "fdcan.h"
 #include "kalman.h"
+#include "iwdg.h"
+#include "fault_log.h"
 #include "scheduler.h"
 #include "task.h"
 #include <math.h>
 #include <stdint.h>
 
-#define RCC_AHB4ENR (*(volatile uint32_t *)0x580244E0U)
-#define GPIOB_MODER (*(volatile uint32_t *)0x58020400U)
-#define GPIOB_ODR   (*(volatile uint32_t *)0x58020414U)
-#define LD1_PIN     (1UL << 0U)
-
-#define CAN_ID_ATTITUDE  0x100U
-
 static kalman_t g_kalman;
 
-static void board_init(void)
+/* ── Boot-time diagnostics ── */
+static void report_boot_diagnostics(void)
 {
-    RCC_AHB4ENR |= (1UL << 1U);
-    GPIOB_MODER &= ~(3UL << 0U);
-    GPIOB_MODER |=  (1UL << 0U);
-    GPIOB_ODR   &= ~LD1_PIN;
+    fault_log_init();
+
+    if (iwdg_reset_was_watchdog()) {
+        uart_puts(">>> Previous reset cause: IWDG (watchdog timeout) <<<\r\n");
+    }
+    iwdg_clear_reset_flags();
+
+    fault_log_t f;
+    if (fault_log_check_and_clear(&f)) {
+        uart_puts("=== Previous boot ended in a fault ===\r\n");
+        uart_printf("EXC_RETURN=0x%x PC=0x%x LR=0x%x xPSR=0x%x\r\n",
+                    f.exc_return, f.pc, f.lr, f.xpsr);
+        uart_printf("CFSR=0x%x HFSR=0x%x\r\n", f.cfsr, f.hfsr);
+        if (f.mmfar_valid) uart_printf("MMFAR=0x%x\r\n", f.mmfar);
+        if (f.bfar_valid)  uart_printf("BFAR=0x%x\r\n", f.bfar);
+        uart_puts("=======================================\r\n");
+    }
 }
 
-/*  task_imu: sensor -> Kalman -> CAN TX  */
-void task_imu(void)
+/* ── Task: IMU read + Kalman fusion, 100Hz ── */
+static void task_imu(void)
 {
     mpu6050_data_t data;
 
@@ -54,72 +79,33 @@ void task_imu(void)
         float ax = data.accel_x / 16384.0f;
         float ay = data.accel_y / 16384.0f;
         float az = data.accel_z / 16384.0f;
-        float wx = data.gyro_x  / 131.0f * (3.14159265f / 180.0f);
-        float wy = data.gyro_y  / 131.0f * (3.14159265f / 180.0f);
+        float wx = data.gyro_x  / 131.0f * 3.14159265f / 180.0f;
+        float wy = data.gyro_y  / 131.0f * 3.14159265f / 180.0f;
 
         kalman_update(&g_kalman, ax, ay, az, wx, wy, 0.01f);
 
-        float roll_deg  = kalman_roll(&g_kalman)  * (180.0f / 3.14159265f);
-        float pitch_deg = kalman_pitch(&g_kalman) * (180.0f / 3.14159265f);
-        float bias_gx   = g_kalman.x[2];
-        float bias_gy   = g_kalman.x[3];
+        float roll  = kalman_roll(&g_kalman)  * 180.0f / 3.14159265f;
+        float pitch = kalman_pitch(&g_kalman) * 180.0f / 3.14159265f;
 
-        /* Pack into CAN frame — fixed-point encoding */
-        int16_t roll_fp  = (int16_t)(roll_deg  * 100.0f);
-        int16_t pitch_fp = (int16_t)(pitch_deg * 100.0f);
-        int16_t bgx_fp   = (int16_t)(bias_gx   * 10000.0f);
-        int16_t bgy_fp   = (int16_t)(bias_gy   * 10000.0f);
+        int roll_i  = (int)roll;
+        int roll_f  = (int)(fabsf(roll  - (float)roll_i) * 100.0f);
+        int pitch_i = (int)pitch;
+        int pitch_f = (int)(fabsf(pitch - (float)pitch_i) * 100.0f);
 
-        fdcan_frame_t frame = {
-            .id  = CAN_ID_ATTITUDE,
-            .dlc = 8U,
-            .data = {
-                (uint8_t)( roll_fp        & 0xFF),
-                (uint8_t)((roll_fp  >> 8) & 0xFF),
-                (uint8_t)( pitch_fp       & 0xFF),
-                (uint8_t)((pitch_fp >> 8) & 0xFF),
-                (uint8_t)( bgx_fp         & 0xFF),
-                (uint8_t)((bgx_fp   >> 8) & 0xFF),
-                (uint8_t)( bgy_fp         & 0xFF),
-                (uint8_t)((bgy_fp   >> 8) & 0xFF),
-            }
-        };
-
-        fdcan_transmit(&frame);
+        uart_printf("R:%d.%d P:%d.%d\r\n", roll_i, roll_f, pitch_i, pitch_f);
     }
 }
 
-/*  task_can: CAN RX -> decode -> UART */
-void task_can(void)
-{
-    fdcan_frame_t frame;
-
-    while (1) {
-        sched_delay_ms(5U);
-
-        if (!fdcan_rx_pending()) continue;
-        if (fdcan_receive(&frame) != 0) continue;
-        if (frame.id != CAN_ID_ATTITUDE || frame.dlc < 8U) continue;
-
-        int16_t roll_fp  = (int16_t)(frame.data[0] | (frame.data[1] << 8));
-        int16_t pitch_fp = (int16_t)(frame.data[2] | (frame.data[3] << 8));
-
-        int roll_i  = roll_fp  / 100;
-        int roll_f  = (roll_fp  < 0 ? -roll_fp  : roll_fp)  % 100;
-        int pitch_i = pitch_fp / 100;
-        int pitch_f = (pitch_fp < 0 ? -pitch_fp : pitch_fp) % 100;
-
-        uart_printf("CAN[0x%x] R:%d.%d P:%d.%d\r\n",
-                    frame.id, roll_i, roll_f, pitch_i, pitch_f);
-    }
-}
-
-/* ── task_led: heartbeat ── */
-void task_led(void)
+/* ── Task: watchdog housekeeping, low priority ──
+ * See the design-limitation comment at the top of this file before
+ * treating this as a complete "system is healthy" proof — right now
+ * it only proves the scheduler is still switching tasks.
+ */
+static void task_housekeep(void)
 {
     while (1) {
-        GPIOB_ODR ^= LD1_PIN;
-        sched_delay_ms(500U);
+        sched_delay_ms(200U);   /* well under the 1000ms IWDG timeout */
+        iwdg_kick();
     }
 }
 
@@ -127,29 +113,30 @@ int main(void)
 {
     rcc_init_pll_480();
     systick_init(480000000U);
-    board_init();
     uart_init();
     i2c_init();
-    fdcan_init();
 
     uart_puts("TamgaOS STM32H753ZI @ 480MHz\r\n");
-    uart_puts("IMU -> Kalman -> FDCAN pipeline\r\n");
+    uart_puts("Kalman roll/pitch\r\n");
+
+    report_boot_diagnostics();
 
     if (mpu6050_init() < 0) {
         uart_puts("MPU6050 init failed\r\n");
         while (1) {}
     }
-    uart_puts("MPU6050 OK\r\n");
 
     kalman_init(&g_kalman);
 
+    /* Arm the watchdog before starting the scheduler, so a hang
+       during task startup itself is also caught, not just hangs
+       that happen once tasks are already running. */
+    iwdg_init(1000U);
+
     sched_init();
-
     sched_task_create(task_imu, TASK_PRIORITY_HIGH);
-    sched_task_create(task_can, TASK_PRIORITY_NORMAL);
-    sched_task_create(task_led, TASK_PRIORITY_LOW);
-
-    sched_start();
+    sched_task_create(task_housekeep, TASK_PRIORITY_LOW);
+    sched_start();   /* never returns */
 
     return 0;
 }
