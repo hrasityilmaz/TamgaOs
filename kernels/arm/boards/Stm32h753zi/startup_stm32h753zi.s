@@ -31,9 +31,9 @@ _vectors:
     .word  Reset_Handler            /* 1  Reset */
     .word  Default_Handler          /* 2  NMI */
     .word  HardFault_Handler        /* 3  HardFault */
-    .word  Default_Handler          /* 4  MemManage */
-    .word  Default_Handler          /* 5  BusFault */
-    .word  Default_Handler          /* 6  UsageFault */
+    .word  MemManage_Handler        /* 4  MemManage */
+    .word  BusFault_Handler         /* 5  BusFault */
+    .word  UsageFault_Handler       /* 6  UsageFault */
     .word  0                        /* 7  reserved */
     .word  0                        /* 8  reserved */
     .word  0                        /* 9  reserved */
@@ -326,6 +326,24 @@ Default_Handler:
 .thumb_func
 .global HardFault_Handler
 HardFault_Handler:
+    b    Default_Handler
+
+.weak MemManage_Handler
+.thumb_func
+.global MemManage_Handler
+MemManage_Handler:
+    b    Default_Handler
+
+.weak BusFault_Handler
+.thumb_func
+.global BusFault_Handler
+BusFault_Handler:
+    b    Default_Handler
+
+.weak UsageFault_Handler
+.thumb_func
+.global UsageFault_Handler
+UsageFault_Handler:
     b    Default_Handler
 
 .weak SysTick_Handler
