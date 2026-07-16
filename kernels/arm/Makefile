@@ -1,6 +1,7 @@
 TARGET = tamgaos
 
 BOARD ?= k64f
+DEBUG ?= 0
 
 CC      = arm-none-eabi-gcc
 AS      = arm-none-eabi-gcc
@@ -18,6 +19,7 @@ CFLAGS += -std=gnu11
 CFLAGS += -Iinclude
 CFLAGS += -Iboards/$(BOARD)
 CFLAGS += -D$(BOARD_DEFINE)
+CFLAGS += -DFAULT_HANDLER_DEBUG_HALT=$(DEBUG)
 CFLAGS += $(BOARD_INCLUDES)
 
 ASFLAGS  = $(CPU_FLAGS)
