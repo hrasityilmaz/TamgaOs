@@ -8,17 +8,6 @@
  * regardless of the vector table entries — this would make it look
  * like MemManage_Handler/BusFault_Handler/UsageFault_Handler routing
  * is broken even if it's actually fine.
- *
- * Build with DEBUG=1 (FAULT_HANDLER_DEBUG_HALT=1) for this test run,
- * so the board halts after each fault instead of resetting — you need
- * to power-cycle / reflash between tests anyway since each trigger
- * below only fires once per boot, and a debug halt lets you confirm
- * the UART dump before manually resetting for the next test.
- *
- * Select which fault to trigger by picking ONE of the FAULT_TEST_*
- * defines below (uncomment exactly one), reflash, observe UART, then
- * switch to the next one and reflash. Only one at a time — code after
- * the trigger never runs.
  */
 
 #include "rcc.h"
@@ -27,13 +16,13 @@
 #include "fault_log.h"
 #include <stdint.h>
 
-/* ── Uncomment exactly one ── */
+/*  Uncomment only one  */
 #define FAULT_TEST_USAGEFAULT   /* divide by zero, needs DIV_0_TRP */
 /* #define FAULT_TEST_BUSFAULT */    /* read from reserved/unmapped bus address */
 /* #define FAULT_TEST_MEMMANAGE */   /* requires your MPU stack-guard region to be active */
 /* #define FAULT_TEST_HARDFAULT */   /* forced escalation: fault while its own priority is masked */
 
-/* ── SCB ── */
+/*  SCB  */
 #define SCB_BASE   0xE000ED00UL
 #define SCB_SHCSR  (*(volatile uint32_t *)(SCB_BASE + 0x24U))
 #define SCB_CCR    (*(volatile uint32_t *)(SCB_BASE + 0x14U))
@@ -102,18 +91,12 @@ int main(void)
     uart_puts("If nothing happens, your MPU guard region isn't covering this test\r\n");
     uart_puts("— tell me your MPU driver/region setup and I'll give an exact trigger.\r\n");
     systick_delay_ms(50U);
-    /* Deliberately blow the stack to hit the MPU-guarded guard region.
-       Recursion the compiler can't tail-call-optimize away (volatile
-       local forces a real stack frame each call). */
     void recurse(volatile uint32_t depth);
     recurse(0U);
 
 #elif defined(FAULT_TEST_HARDFAULT)
     uart_puts("Triggering: forced HardFault (fault while masked)\r\n");
     systick_delay_ms(50U);
-    /* Raise BASEPRI above BusFault's priority so a BusFault can't be
-       taken as BusFault — architecturally this escalates to HardFault
-       regardless of SHCSR/vector table routing. */
     __asm volatile ("cpsid i");   /* mask all configurable-priority exceptions */
     volatile uint32_t *bad = (volatile uint32_t *)0xA0000000UL;
     volatile uint32_t v = *bad;   /* escalates to HardFault since BusFault is masked */

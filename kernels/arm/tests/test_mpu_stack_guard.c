@@ -45,9 +45,7 @@ static void stack_burner_task(void)
 
 static void stack_burner_recurse(volatile uint32_t depth)
 {
-    /* Volatile local array forces a real stack frame each call —
-       without -O2, GCC won't tail-call-optimize this away, but the
-       volatile also blocks it regardless of optimization level. */
+    /* Volatile local array forces a real stack frame each call */
     volatile uint32_t pad[16];
     pad[0] = depth;
     stack_burner_recurse(depth + 1U);

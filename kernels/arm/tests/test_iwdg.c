@@ -28,12 +28,6 @@ static void report_boot_cause(void)
 {
     fault_log_t f;
     fault_log_init();
-
-    /* Read IWDG cause BEFORE clearing flags, and BEFORE fault_log
-       potentially reports something else — these are independent
-       questions ("did IWDG reset us" vs "did a fault happen") and
-       both can be true after a hung task that itself resulted from
-       a fault-then-halt sequence, so report both. */
     if (iwdg_reset_was_watchdog()) {
         uart_puts(">>> Previous reset cause: IWDG (watchdog timeout) <<<\r\n\r\n");
     } else {

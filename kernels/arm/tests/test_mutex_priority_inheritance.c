@@ -102,10 +102,6 @@ void task_high(void)
         uart_puts("[HIGH] mutex giving back\r\n");
         GPIOB_ODR &= ~LD1_PIN;
         mutex_unlock(&g_test_mutex);
-        /* By making the LOW period ~1500ms and the HIGH wait time
-           700ms, we reduce the total period to 900ms (200+700).
-           Since the common multiple of 1500 and 900 is large, the phases will now
-           shift quickly and HIGH will inevitably hit the busy-wait window of LOW. */
         sched_delay_ms(700U); 
     }
 }
