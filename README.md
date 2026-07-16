@@ -1,7 +1,7 @@
 # TamgaOS (Yula)
 
-Bare-metal RTOS written in C and ARM assembly.  
-Started as a learning project — bootloaders, memory layouts, context switching, executable formats.
+Bare-metal RTOS written in C and ARM assembly.
+Started as a learning project — now focused on deterministic scheduling, memory protection, and debuggability.
 
 ## Kernel core (shared across all ARM boards)
 
