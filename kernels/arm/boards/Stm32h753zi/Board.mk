@@ -22,10 +22,13 @@ C_SRCS  += drivers/stm32h753zi/rcc.c
 C_SRCS += drivers/stm32h753zi/systick.c
 C_SRCS += drivers/stm32h753zi/i2c.c
 C_SRCS += src/stm32h753zi/main.c
+# C_SRCS += tests/test_mpu_stack_guard.c
 C_SRCS += sensors/mpu6050.c
 C_SRCS += drivers/stm32h753zi/fdcan.c
 C_SRCS += controls/kalman.c
 C_SRCS += kernel/core/hardfault.c
+C_SRCS += kernel/core/fault_log.c
+C_SRCS += drivers/stm32h753zi/iwdg.c
 
 
 PYOCD_TARGET = stm32h743xx
