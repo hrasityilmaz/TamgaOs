@@ -41,6 +41,8 @@ void pit_delay_ms(uint32_t ms) {
 
 void pit_sched_enable(void) { s_sched_active = 1U; }
 
+uint32_t systick_get_ms(void) { return g_pit_tick; }
+
 void PIT0_IRQHandler(void) {
   PIT->CHANNEL[0].TFLG = PIT_TFLG_TIF_MASK;
   g_pit_tick++;
