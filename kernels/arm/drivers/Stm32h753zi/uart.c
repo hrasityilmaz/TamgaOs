@@ -34,21 +34,15 @@
 #define USART_CR1_UE (1UL << 0U)
 #define USART_CR1_RE (1UL << 2U)
 #define USART_CR1_TE (1UL << 3U)
-
-/* USART_ISR bits */
-#define USART_ISR_RXNE  (1UL << 5U)    /* Read data register */
-#define USART_ISR_TC    (1UL << 6U)    /* Transmission complete */
-#define USART_ISR_TXE   (1UL << 7U)    /* Transmit data register*/
-
-/* ── RCC ── */
+#define USART_ISR_RXNE  (1UL << 5U) 
+#define USART_ISR_TC    (1UL << 6U) 
+#define USART_ISR_TXE   (1UL << 7U) 
 #define RCC_BASE        0x58024400UL
 #define RCC_AHB4ENR     (*(volatile uint32_t *)(RCC_BASE + 0x0E0U))
 #define RCC_APB1LENR    (*(volatile uint32_t *)(RCC_BASE + 0x0E8U))
 
-#define RCC_AHB4ENR_GPIODEN   (1UL << 3U)    /* GPIOD clock enable */
-#define RCC_APB1LENR_USART3EN (1UL << 18U)   /* USART3 clock enable */
-
-/* ── GPIOD ── */
+#define RCC_AHB4ENR_GPIODEN   (1UL << 3U)   
+#define RCC_APB1LENR_USART3EN (1UL << 18U) 
 #define GPIOD_BASE      0x58020C00UL
 #define GPIOD_MODER     (*(volatile uint32_t *)(GPIOD_BASE + 0x00U))
 #define GPIOD_OSPEEDR   (*(volatile uint32_t *)(GPIOD_BASE + 0x08U))
@@ -104,21 +98,32 @@ char uart_getc(void)
     return (char)(USART3_RDR & 0xFFU);
 }
 
-static void print_uint(uint32_t n, uint8_t base)
+static void print_uint_padded(uint32_t n, uint8_t base, int width, int pad_zero, int upper)
 {
     char buf[32];
     int  i = 31;
     buf[i] = '\0';
     if (n == 0U) {
-        uart_putc('0');
-        return;
+        buf[--i] = '0';
+    } else {
+        while (n > 0U && i > 0) {
+            uint32_t rem = n % base;
+            char digit_a = upper ? 'A' : 'a';
+            buf[--i] = (char)(rem < 10U ? '0' + rem : digit_a + rem - 10U);
+            n /= base;
+        }
     }
-    while (n > 0U && i > 0) {
-        uint32_t rem = n % base;
-        buf[--i] = (char)(rem < 10U ? '0' + rem : 'a' + rem - 10U);
-        n /= base;
+
+    int len = 31 - i;
+    for (int pad = len; pad < width; pad++) {
+        uart_putc(pad_zero ? '0' : ' ');
     }
     uart_puts_raw(&buf[i]);
+}
+
+static void print_uint(uint32_t n, uint8_t base)
+{
+    print_uint_padded(n, base, 0, 0, 0);
 }
 
 static void print_int(int32_t n)
@@ -149,7 +154,6 @@ static void print_float(double f, int decimals)
     }
 }
 
-// uart_printf — minimal: %d %u %x %s %f %c %%
 void uart_printf(const char *fmt, ...)
 {
 	//mutex_lock(&s_uart_mutex);
@@ -161,9 +165,17 @@ void uart_printf(const char *fmt, ...)
             uart_putc(*fmt++);
             continue;
         }
-        fmt++;   /* skip '%' */
-
-        /* precision */
+        fmt++; 
+        int pad_zero = 0;
+        if (*fmt == '0') {
+            pad_zero = 1;
+            fmt++;
+        }
+        int width = 0;
+        while (*fmt >= '0' && *fmt <= '9') {
+            width = width * 10 + (*fmt - '0');
+            fmt++;
+        }
         int decimals = 3;
         if (*fmt == '.') {
             fmt++;
@@ -175,10 +187,15 @@ void uart_printf(const char *fmt, ...)
         }
 
         switch (*fmt) {
-            case 'd': print_int(va_arg(args, int));              break;
-            case 'u': print_uint(va_arg(args, uint32_t), 10U);  break;
-            case 'x': print_uint(va_arg(args, uint32_t), 16U);  break;
-            case 'X': print_uint(va_arg(args, uint32_t), 16U);  break;
+            case 'd': {
+                int32_t v = va_arg(args, int);
+                if (v < 0) { uart_putc('-'); v = -v; }
+                print_uint_padded((uint32_t)v, 10U, width, pad_zero, 0);
+                break;
+            }
+            case 'u': print_uint_padded(va_arg(args, uint32_t), 10U, width, pad_zero, 0); break;
+            case 'x': print_uint_padded(va_arg(args, uint32_t), 16U, width, pad_zero, 0); break;
+            case 'X': print_uint_padded(va_arg(args, uint32_t), 16U, width, pad_zero, 1); break;
             case 's': uart_puts_raw(va_arg(args, const char *));     break;
             case 'c': uart_putc((char)va_arg(args, int));        break;
             case 'f': print_float(va_arg(args, double), decimals); break;
