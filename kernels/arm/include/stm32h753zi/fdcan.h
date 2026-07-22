@@ -14,5 +14,8 @@ void    fdcan_init(void);
 int8_t  fdcan_transmit(const fdcan_frame_t *frame);
 int8_t  fdcan_receive(fdcan_frame_t *frame);
 uint8_t fdcan_rx_pending(void);
+uint8_t fdcan_is_bus_off(void);
+uint32_t fdcan_get_psr(void);
+void fdcan_debug_print_gpio(void);
 
 #endif /* FDCAN_H */
