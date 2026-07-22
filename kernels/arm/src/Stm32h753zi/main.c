@@ -127,10 +127,6 @@ int main(void)
     }
 
     kalman_init(&g_kalman);
-
-    /* Arm the watchdog before starting the scheduler, so a hang
-       during task startup itself is also caught, not just hangs
-       that happen once tasks are already running. */
     iwdg_init(1000U);
 
     sched_init();
