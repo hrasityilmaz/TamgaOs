@@ -8,8 +8,9 @@
  * TASK_STACK_SIZE unit: uint32_t (4-byte) words.
  * 640 words = 2560 bytes = 2.5KB per task.
  * Total stack budget for TASK_MAX = 8 tasks: 8 * 2560 = 20480 bytes (20KB).
+ * 12 * 2560 = 30720 bytes (30KB)
  */
-#define TASK_MAX        (8U)
+#define TASK_MAX        (12U)
 #define TASK_STACK_SIZE (640U)
 
 #define TASK_PRIORITY_HIGH   (0U)
@@ -32,6 +33,8 @@ typedef struct task_s {
   uint32_t         delay_ticks;
   void           (*func)(void);
   struct task_s   *wait_next;
+  struct task_s  **wait_list_head; /* task wait */
+  volatile uint8_t timed_out; /* task wait */
   uint32_t         stack[TASK_STACK_SIZE] TAMGAOS_ALIGNED(32);
 } task_t;
 
