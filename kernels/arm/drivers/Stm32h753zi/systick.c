@@ -16,7 +16,7 @@ void systick_init(uint32_t core_clock_hz) {
     SYST_CSR = 0U;
     SYST_RVR = (core_clock_hz / 8U / 1000U) - 1U;   /* AHB/8 → 1ms */
     SYST_CVR = 0U;
-    SYST_CSR = SYST_CSR_TICKINT | SYST_CSR_ENABLE;   /* CLKSOURCE=0 */
+    SYST_CSR = SYST_CSR_TICKINT | SYST_CSR_ENABLE;
 }
 
 void SysTick_Handler(void) {
