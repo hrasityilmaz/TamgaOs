@@ -72,16 +72,6 @@ void HardFault_Handler(void)
         "b hardfault_c      \n");
 }
 
-/*
- * MemManage/BusFault/UsageFault share the same entry pattern and the
- * same hardfault_c() body below. Without these three, MemManage/
- * BusFault/UsageFault fall through to the weak `b Default_Handler`
- * defaults in startup_stm32h753zi.s — a silent infinite loop with no
- * UART output and nothing for GDB to inspect. This is what was
- * happening before these were added (e.g. the divide-by-zero test
- * going silent: UsageFault fired, but UsageFault_Handler didn't exist
- * here, so the weak default absorbed it instead).
- */
 __attribute__((naked))
 void MemManage_Handler(void)
 {
@@ -173,14 +163,6 @@ void hardfault_c(uint32_t *sp, uint32_t exc_return)
     if (hf_cfsr & (1UL <<  1U)) hf_puts("  DACCVIOL\r\n");
     if (hf_cfsr & (1UL <<  0U)) hf_puts("  IACCVIOL\r\n");
 
-    /*
-     * Persist the same record to Backup SRAM before halting. UART
-     * output above only helps if someone was watching the terminal
-     * at this exact moment — this record survives a reset (this
-     * handler doesn't reset itself, but IWDG eventually will if it's
-     * active and nothing kicks it from here) so main() can read and
-     * re-report it on next boot even if nobody was attached now.
-     */
     fault_log_t entry;
     entry.exc_return  = exc_return;
     entry.pc          = hf_pc;
@@ -195,13 +177,10 @@ void hardfault_c(uint32_t *sp, uint32_t exc_return)
     entry.hfsr        = hf_hfsr;
     entry.mmfar       = hf_mmfar;
     entry.bfar        = hf_bfar;
-    entry.mmfar_valid = (hf_cfsr & (1UL << 7U))  ? 1U : 0U;  /* MMARVALID */
-    entry.bfar_valid  = (hf_cfsr & (1UL << 15U)) ? 1U : 0U;  /* BFARVALID */
+    entry.mmfar_valid = (hf_cfsr & (1UL << 7U))  ? 1U : 0U; 
+    entry.bfar_valid  = (hf_cfsr & (1UL << 15U)) ? 1U : 0U;
     fault_log_write(&entry);
 
-    /* Verify the write actually stuck, right now, in this same run —
-       if PWR_CR1.DBP or RCC_AHB4ENR.BKPRAMEN aren't doing what they
-       should, this catches it immediately instead of after a reset. */
     if (fault_log_peek_magic() == FAULT_LOG_MAGIC) {
         hf_puts("Backup SRAM write: OK\r\n");
     } else {
@@ -209,12 +188,6 @@ void hardfault_c(uint32_t *sp, uint32_t exc_return)
     }
 
     hf_puts("*** HALTED ***\r\n");
-
-    /*
-     * CFSR bits are sticky (write-1-to-clear) — clear them now that
-     * we've read and reported them, so a NEXT fault's dump isn't
-     * polluted by bits left over from this one.
-     */
     SCB_CFSR = hf_cfsr;
 
     /*
