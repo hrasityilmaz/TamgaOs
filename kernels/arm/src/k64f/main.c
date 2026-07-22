@@ -1,7 +1,7 @@
 #include "mcg.h"
 #include "mmio_deviation.h"
 #include "mutex.h"
-#include "pit.h"
+#include "systick.h"
 #include "scheduler.h"
 #include "semaphore.h"
 #include "task.h"
@@ -138,9 +138,8 @@ int main(void) {
   sched_task_create(task_fpu_test_a, TASK_PRIORITY_NORMAL);
   sched_task_create(task_fpu_test_b, TASK_PRIORITY_NORMAL);
 
-
-  pit_init(1000U);
-  pit_sched_enable();  // Later will fix seperate enable call !! (for m7 port dont need to call)
+  systick_init(120000000UL);
+  /* systick_sched_enable();   if PIT DONT COMMENT/REMOVE !! */
 
   uart_puts("Starting scheduler...\r\n");
   sched_start();
