@@ -41,14 +41,14 @@ void sem_take(sem_t *s) {
     if (s->count > 0) {
       s->count--;
       sched_critical_exit(p);
-      uart_puts("[TAKE] got it immediately\r\n");
+      //uart_puts("[TAKE] got it immediately\r\n");
       return;
     }
     g_current_task->state = TASK_BLOCKED;
     wq_insert(s, g_current_task);   /* must stay inside critical section */
     sched_block_locked();           /* state+queue+next-seçim+PendSV interrupt must be close !!! */
     sched_critical_exit(p);
-    uart_puts("[TAKE] blocking now\r\n");
+    //uart_puts("[TAKE] blocking now\r\n");
     __asm volatile("dsb");
     __asm volatile("isb");
     /* woke up — retry */
@@ -61,12 +61,12 @@ void sem_give(sem_t *s) {
   if (waiter != NULL) {
     if (s->count < s->max)
       s->count++;          /* hand off the token so sem_take's re-check succeeds */
-    uart_puts("[GIVE] found waiter, waking\r\n");
+    //uart_puts("[GIVE] found waiter, waking\r\n");
     sched_wake_task(waiter); // This was bug !!
     sched_critical_exit(p);
     return;
   }
-  uart_puts("[GIVE] no waiter, count++\r\n");
+  //uart_puts("[GIVE] no waiter, count++\r\n");
   if (s->count < s->max) {
     s->count++;
   }
