@@ -3,6 +3,7 @@
 #include "tamgaos_mmio.h"
 #include "task.h"
 #include <stddef.h>
+#include "uart.h"
 
 task_t *volatile g_current_task;
 task_t *volatile g_next_task;
@@ -57,6 +58,25 @@ static void mpu_init_stack_guard(void) {
   MPU_CTRL = MPU_CTRL_ENABLE | MPU_CTRL_PRIVDEFENA;
   __asm volatile("dsb");
   __asm volatile("isb");
+}
+
+/*
+ * TODO:
+ * must checkk later sched_tick is not perfect for this
+ * need change 
+ */
+void sched_wait_list_remove(task_t **head, task_t *t) {
+  if (*head == t) {
+    *head = t->wait_next;
+    return;
+  }
+  task_t *cur = *head;
+  while ((cur != NULL) && (cur->wait_next != t)) {
+    cur = cur->wait_next;
+  }
+  if (cur != NULL) {
+    cur->wait_next = t->wait_next;
+  }
 }
 
 /*
@@ -160,6 +180,8 @@ int8_t sched_task_create(void (*func)(void), uint8_t priority) {
   t->priority = priority;
   t->state = TASK_READY;
   t->delay_ticks = 0U;
+  t->wait_list_head = NULL;
+  t->timed_out = 0U;
   t->sp = task_stack_init(&t->stack[TASK_STACK_SIZE], func);
   t->stack[TASK_STACK_CANARY_INDEX] = TASK_STACK_CANARY_VALUE;
   s_task_count++;
@@ -201,16 +223,6 @@ static task_t *sched_select_next(void) {
 
 /*
  * Central, single point of truth for "who runs next".
- *
- * If a previously-selected g_next_task was marked TASK_RUNNING but the
- * actual context switch (PendSV) never happened before this function
- * is called again (e.g. two scheduling events occurring back-to-back
- * faster than PendSV could service the first one), that stale
- * speculative RUNNING mark is reverted to READY here before a fresh
- * selection is made. This prevents a task from being permanently
- * skipped by sched_select_next() (which only considers READY tasks),
- * which was the root cause of an earlier "zombie task" defect during
- * initial bring-up on both supported boards.
  */
 static void sched_commit_next(void) {
   if ((g_next_task != NULL) && (g_next_task != g_current_task) &&
@@ -233,6 +245,11 @@ void sched_tick(void) {
     if ((t->state == TASK_BLOCKED) && (t->delay_ticks > 0U)) {
       t->delay_ticks--;
       if (t->delay_ticks == 0U) {
+        if (t->wait_list_head != NULL) {
+          sched_wait_list_remove(t->wait_list_head, t);
+          t->wait_list_head = NULL;
+          t->timed_out = 1U;
+        }
         t->state = TASK_READY;
       }
     }
@@ -312,14 +329,6 @@ static task_t *sched_pick_and_mark(void) {
   return g_next_task;
 }
 
-/*
- * Variant of sched_block() for callers that already hold the
- * scheduler's critical section (e.g. mutex_lock / sem_take), so that
- * "mark blocked + enqueue + select next + arm PendSV" happens as one
- * uninterruptible sequence. Without this, a SysTick tick interleaving
- * between releasing the critical section and arming PendSV could
- * orphan the newly-blocked task (see mutex.c / semaphore.c callers).
- */
 void sched_block_locked(void) {
   g_next_task = sched_pick_and_mark();
   trigger_pendsv();
