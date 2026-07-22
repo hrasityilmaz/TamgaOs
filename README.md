@@ -3,6 +3,9 @@
 Bare-metal RTOS written in C and ARM assembly.  
 Started as a learning project — now focused on deterministic scheduling, memory protection, and debuggability.
 
+![TamgaOS CAN](images/tamga_can_com.gif)  
+*STM32H753ZI (FDCAN) ↔ FRDM-K64F (FlexCAN) — real two-node bus, SN65HVD230 transceivers, verified ACK on both sides*
+
 ## Kernel core (shared across all ARM boards)
 
 **Kernel**
@@ -12,7 +15,12 @@ Started as a learning project — now focused on deterministic scheduling, memor
 **Sync**
 - Mutex (LDREX/STREX) with priority inheritance — elevates the lock owner's priority to match a higher-priority blocked waiter, preventing priority inversion; restores original priority on unlock
 - Semaphore with priority-based wait queues
+- Queue — fixed-size circular buffer, priority-ordered wait list on both the send side and the receive side (a task blocked on a full/empty queue is served in priority order, not FIFO order)
+- Event flags (event groups) — bitmask-based `EVENT_WAIT_ANY` / `EVENT_WAIT_ALL` waiting with optional auto-clear on wake
+- Timeout support across the board — `mutex_lock_timeout`, `queue_send_timeout`, `queue_receive_timeout`, `event_wait_timeout` all bound their wait on an absolute deadline (via `systick_get_ms()`), so a task that wakes and loses a race re-arms only the *remaining* budget instead of the full timeout again
 - Critical section (cpsid/cpsie)
+
+All four primitives above live in `kernel/core/` and are genuinely board-agnostic — same source file, same behavior, verified independently on both STM32H753ZI and K64F (priority-order, ANY/ALL/auto_clear, and both timeout-expiry/timeout-success paths all pass identically on both ports).
 
 ## ARM port — STM32H753ZI (Cortex-M7)
 
@@ -39,26 +47,32 @@ Started as a learning project — now focused on deterministic scheduling, memor
 **Sync**
 - Mutex (LDREX/STREX) with priority inheritance — elevates the lock owner's priority to match a higher-priority blocked waiter, preventing priority inversion; restores original priority on unlock
 - Semaphore with priority-based wait queues
+- Queue — priority-ordered wait on send and receive, with a bounded (`_timeout`) variant
+- Event flags — ANY/ALL/auto_clear, with a bounded (`_timeout`) variant
 - Critical section (cpsid/cpsie)
 
 **Drivers**
-- SysTick (1ms tick, AHB/8)
+- SysTick (1ms tick, AHB/8) — also the shared kernel's monotonic time source (`systick_get_ms()`) used by every `_timeout` primitive above
 - RCC (HSI 64MHz and HSE/PLL1 480MHz)
 - UART (USART3, 115200, Virtual COM via ST-Link)
 - I2C (I2C1 PB8/PB9 AF4)
-- CAN (PA11=RX (AF9), PA12=TX (AF9))
+- FDCAN1 (PB8=RX (AF9), PB9=TX (AF9) — PA11/PA12 they're tied to USB OTG FS) — verified on a real two-node bus: internal loopback passes, and with an SN65HVD230 transceiver on each board, STM32 and K64F exchange frames continuously with zero ACK failures on either side
 - IWDG (Independent Watchdog, LSI-clocked, software-configurable timeout)
 
 **Sensors**
 - MPU6050
 
 **Tests**
-- `tests/test_mutex_priority_inheritance.c` - validates elevate/restore behavior under LOW/HIGH/MED priority contention
-- `tests/imu_kalman_fdcan.c` - imu kalman fdcan test
-- `tests/test_fdcan1.c` - Standart loopback data going/coming test
-- `tests/test_fault_handler.c` - deliberately triggers UsageFault/BusFault/MemManage/HardFault and verifies UART dump + Backup SRAM persistence across a real reset
-- `tests/test_mpu_stack_guard.c` - runs a real scheduled task to destruction to verify the MPU stack-overflow guard fires with the correct faulting address
-- `tests/test_iwdg.c` - arms IWDG, proves kicking prevents reset, then deliberately starves it to confirm the board actually resets and the cause is correctly reported
+- `tests/test_mutex_priority_inheritance.c` — validates elevate/restore behavior under LOW/HIGH/MED priority contention
+- `tests/test_queue_priority_order.c` — validates priority-ordered wake on both the send side and the receive side of a queue
+- `tests/test_event_flags.c` — validates ANY/ALL wake, auto_clear, and both timeout-expiry/timeout-success paths
+- `tests/test_timeout.c` — validates `mutex_lock_timeout`/`queue_send_timeout`/`queue_receive_timeout` against both an expiring wait and a wait satisfied just before the deadline
+- `tests/imu_kalman_fdcan.c` — imu kalman fdcan test
+- `tests/test_fdcan1.c` — internal loopback: send/receive round-trip, byte-for-byte
+- `tests/stm/test_fdcan_real_bus.c` — real-bus test (loopback disabled): periodic TX + continuous RX polling, paired with the matching K64F test below
+- `tests/test_fault_handler.c` — deliberately triggers UsageFault/BusFault/MemManage/HardFault and verifies UART dump + Backup SRAM persistence across a real reset
+- `tests/test_mpu_stack_guard.c` — runs a real scheduled task to destruction to verify the MPU stack-overflow guard fires with the correct faulting address
+- `tests/test_iwdg.c` — arms IWDG, proves kicking prevents reset, then deliberately starves it to confirm the board actually resets and the cause is correctly reported
 
 Still improving — development notes at https://auctra.app
 
@@ -79,16 +93,26 @@ Still improving — development notes at https://auctra.app
 - PSP per-task isolation
 - FPU context switching (fpv4-sp-d16, single-precision, lazy stacking via EXC_RETURN)
 - Stack overflow guard: software canary only (K64F MPU registers use a non-standard memory layout vs. the STM32H753ZI port; hardware guard planned for a future update)
+- Tick source is selectable at build time: **native ARM SysTick by default** (Cortex-M4 shares the same `0xE000E010` SysTick block as the STM32H753ZI port's Cortex-M7 — identical technique), or `TICK_SOURCE=pit` to drive the scheduler tick from the PIT peripheral instead. Either way, board-agnostic kernel code always sees the same `systick_init()`/`systick_get_ms()`.
 
 **Sync**
 - Mutex (LDREX/STREX) with priority inheritance — elevates the lock owner's priority to match a higher-priority blocked waiter, preventing priority inversion; restores original priority on unlock
 - Semaphore with priority-based wait queues
+- Queue — priority-ordered wait on send and receive, with a bounded (`_timeout`) variant
+- Event flags — ANY/ALL/auto_clear, with a bounded (`_timeout`) variant
 - Critical section (cpsid/cpsie)
 
 **Drivers**
-- PIT timer (32-bit, scheduler tick)
+- SysTick (default tick source — see Kernel above) or PIT (32-bit, opt-in via `TICK_SOURCE=pit`)
 - UART
 - MCG
+- FlexCAN0 (PTB18=TX (ALT2), PTB19=RX (ALT2)) — verified on a real two-node bus: internal loopback passes (5 sequential frames, no drops), and with an SN65HVD230 transceiver, K64F and STM32 exchange frames continuously with zero ACK failures on either side. 
+
+**Tests**
+- `tests/k64f/test_queue_priority_order.c` — K64F port of the queue priority-order test
+- `tests/k64f/test_event_flags.c` — K64F port of the event-flags test (all 5 scenarios)
+- `tests/k64f/test_flexcan_loopback.c` — internal loopback: single frame + 5 sequential frames, plus a non-blocking `rx_pending()` check
+- `tests/k64f/test_flexcan_real_bus.c` — real-bus test (loopback disabled), paired with the STM32 test above
 
 ---
 
@@ -121,6 +145,13 @@ C   -> TamgaOS __C__
 ```sh
 make clean
 make BOARD=k64f
+make flash BOARD=k64f
+```
+
+Use the PIT-based tick source instead of native SysTick:
+```sh
+make clean BOARD=k64f
+make BOARD=k64f TICK_SOURCE=pit
 make flash BOARD=k64f
 ```
 
