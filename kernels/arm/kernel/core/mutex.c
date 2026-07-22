@@ -1,10 +1,10 @@
 #include "mutex.h"
 #include "sched_critical.h"
 #include "scheduler.h"
+#include "systick.h"
 #include "task.h"
 #include <stddef.h>
 #include <stdint.h>
-#include "uart.h" 
 
 void mutex_init(mutex_t *m) {
   m->task = NULL;
@@ -56,16 +56,12 @@ void mutex_lock(mutex_t *m) {
       continue;
     }
 
-    /* When HIGH task blocked, LOW owner's prioritywill go up.
-     * is_elevated flag we are saving only needed
-    */
     if (g_current_task->priority < m->task->priority) {
       if (!m->is_elevated) {
         m->owner_original_priority = m->task->priority;
         m->is_elevated = 1U;
       }
       m->task->priority = g_current_task->priority;
-      uart_puts("[PI] ELEVATED\r\n");
     }
 
     g_current_task->state = TASK_BLOCKED;
@@ -77,6 +73,53 @@ void mutex_lock(mutex_t *m) {
   }
 }
 
+int mutex_lock_timeout(mutex_t *m, uint32_t timeout_ms) {
+  uint32_t deadline = systick_get_ms() + timeout_ms;
+
+  for (;;) {
+    if (mutex_try_acquire(m)) {
+      g_current_task->wait_list_head = NULL;
+      return 0;
+    }
+
+    uint32_t now = systick_get_ms();
+    if (now >= deadline) {
+      return -1; 
+    }
+    uint32_t remaining = deadline - now;
+
+    uint32_t p = sched_critical_enter();
+    if (m->task == NULL) {
+      sched_critical_exit(p);
+      continue; 
+    }
+
+    if (g_current_task->priority < m->task->priority) {
+      if (!m->is_elevated) {
+        m->owner_original_priority = m->task->priority;
+        m->is_elevated = 1U;
+      }
+      m->task->priority = g_current_task->priority;
+    }
+
+    g_current_task->state = TASK_BLOCKED;
+    g_current_task->delay_ticks = remaining; 
+    g_current_task->wait_list_head = &m->waiters;
+    g_current_task->timed_out = 0U;
+    wq_insert(m, g_current_task);
+    sched_block_locked();
+    sched_critical_exit(p);
+    __asm volatile("dsb");
+    __asm volatile("isb");
+
+    if (g_current_task->timed_out) {
+      g_current_task->timed_out = 0U;
+      g_current_task->wait_list_head = NULL;
+      return -1;
+    }
+  }
+}
+
 void mutex_unlock(mutex_t *m) {
   if (m->task != g_current_task)
     return;
@@ -85,11 +128,10 @@ void mutex_unlock(mutex_t *m) {
 
   uint32_t p = sched_critical_enter();
   task_t *waiter = wq_pop(m);
-  /* New added priority based!! */
+
   if (m->is_elevated) {
     m->task->priority = m->owner_original_priority;
     m->is_elevated = 0U;
-    uart_puts("[PI] RESTORED\r\n");
   }
 
   m->task = NULL;
