@@ -9,9 +9,9 @@ _vectors:
     .word  Reset_Handler
     .word  Default_Handler
     .word  HardFault_Handler
-    .word  Default_Handler
-    .word  Default_Handler
-    .word  Default_Handler
+    .word  MemManage_Handler    /* was: Default_Handler */
+    .word  BusFault_Handler     /* was: Default_Handler */
+    .word  UsageFault_Handler   /* was: Default_Handler */
     .word  0
     .word  0
     .word  0
@@ -202,6 +202,24 @@ HardFault_Handler:
 .thumb_func
 .global SVC_Handler
 SVC_Handler:
+    b    Default_Handler
+
+.weak MemManage_Handler
+.thumb_func
+.global MemManage_Handler
+MemManage_Handler:
+    b    Default_Handler
+
+.weak BusFault_Handler
+.thumb_func
+.global BusFault_Handler
+BusFault_Handler:
+    b    Default_Handler
+
+.weak UsageFault_Handler
+.thumb_func
+.global UsageFault_Handler
+UsageFault_Handler:
     b    Default_Handler
 
 .end
