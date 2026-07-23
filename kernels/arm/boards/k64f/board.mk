@@ -17,6 +17,7 @@ C_SRCS  += kernel/core/scheduler.c
 C_SRCS  += drivers/k64f/uart.c
 C_SRCS  += drivers/k64f/mcg.c
 C_SRCS  += drivers/k64f/flexcan.c
+C_SRCS  += drivers/k64f/pwm.c
 C_SRCS  += kernel/core/mutex.c 
 C_SRCS  += kernel/core/semaphore.c
 C_SRCS  += kernel/core/queue.c 
@@ -27,7 +28,8 @@ C_SRCS  += kernel/core/hardfault_minimal.c
 # C_SRCS  += tests/k64f/test_queue_priority_order.c
 # C_SRCS  += tests/k64f/test_event_flags.c
 # C_SRCS  += tests/k64f/test_flexcan_loopback.c
-C_SRCS  += tests/k64f/test_flexcan_real_bus.c
+# C_SRCS  += tests/k64f/test_flexcan_real_bus.c
+C_SRCS  += tests/k64f/pwm_test.c
 
 # Tick source selection — default: native ARM SysTick 
 #   Usage: make BOARD=k64f TICK_SOURCE=pit
