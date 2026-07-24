@@ -22,6 +22,12 @@ Started as a learning project — now focused on deterministic scheduling, memor
 
 All four primitives above live in `kernel/core/` and are genuinely board-agnostic — same source file, same behavior, verified independently on both STM32H753ZI and K64F (priority-order, ANY/ALL/auto_clear, and both timeout-expiry/timeout-success paths all pass identically on both ports).
 
+## Actuators (shared abstraction, board-specific PWM backend)
+
+**Servo/ESC**
+- `actuators/servo.c` — generic hobby servo/ESC abstraction over each board's PWM driver. Maps a 0-180 degree angle (or raw microsecond pulse, for ESC throttle) to the standard 1000-2000us hobby servo/ESC convention (1000=0deg/min-throttle, 1500=90deg/center, 2000=180deg/max-throttle)
+- Continuous 0↔180 sweep helper (`servo_sweep_step()`), independent per channel — verified on both boards with a logic analyzer showing a clean, correctly-timed 20ms/50Hz signal
+
 ## ARM port — STM32H753ZI (Cortex-M7)
 
 ![TamgaOS STM32H7](images/stm32_tamga.gif)
@@ -58,6 +64,7 @@ All four primitives above live in `kernel/core/` and are genuinely board-agnosti
 - I2C (I2C1 PB8/PB9 AF4)
 - FDCAN1 (PB8=RX (AF9), PB9=TX (AF9) — PA11/PA12 they're tied to USB OTG FS) — verified on a real two-node bus: internal loopback passes, and with an SN65HVD230 transceiver on each board, STM32 and K64F exchange frames continuously with zero ACK failures on either side
 - IWDG (Independent Watchdog, LSI-clocked, software-configurable timeout)
+- PWM (TIM2_CH1, PA0 / Arduino D32, 50Hz/1-2ms hobby servo & ESC convention) — verified with a logic analyzer: clean 20.0ms period, pulse width tracking the requested 1000-2000us value exactly.  
 
 **Sensors**
 - MPU6050
@@ -73,6 +80,8 @@ All four primitives above live in `kernel/core/` and are genuinely board-agnosti
 - `tests/test_fault_handler.c` — deliberately triggers UsageFault/BusFault/MemManage/HardFault and verifies UART dump + Backup SRAM persistence across a real reset
 - `tests/test_mpu_stack_guard.c` — runs a real scheduled task to destruction to verify the MPU stack-overflow guard fires with the correct faulting address
 - `tests/test_iwdg.c` — arms IWDG, proves kicking prevents reset, then deliberately starves it to confirm the board actually resets and the cause is correctly reported
+- `tests/stm/pwm_test.c` — sweeps TIM2_CH1 pulse width 1000↔2000us continuously, printing each step over UART
+- `tests/stm/servo_sweep_test.c` — continuous 0↔180 degree servo sweep via the actuators/servo.c abstraction
 
 Still improving — development notes at https://auctra.app
 
@@ -106,13 +115,16 @@ Still improving — development notes at https://auctra.app
 - SysTick (default tick source — see Kernel above) or PIT (32-bit, opt-in via `TICK_SOURCE=pit`)
 - UART
 - MCG
-- FlexCAN0 (PTB18=TX (ALT2), PTB19=RX (ALT2)) — verified on a real two-node bus: internal loopback passes (5 sequential frames, no drops), and with an SN65HVD230 transceiver, K64F and STM32 exchange frames continuously with zero ACK failures on either side. 
+- FlexCAN0 (PTB18=TX (ALT2), PTB19=RX (ALT2)) — verified on a real two-node bus: internal loopback passes (5 sequential frames, no drops), and with an SN65HVD230 transceiver, K64F and STM32 exchange frames continuously with zero ACK failures on either side.
+- PWM (FTM0 + FTM3, 4 channels: PTC1=FTM0_CH0/ALT4, PTC5=FTM0_CH2/ALT7, PTC8=FTM3_CH4/ALT3, PTC9=FTM3_CH5/ALT3 — 50Hz/1-2ms hobby servo & ESC convention) — verified on all 4 channels with a logic analyzer.  
 
 **Tests**
 - `tests/k64f/test_queue_priority_order.c` — K64F port of the queue priority-order test
 - `tests/k64f/test_event_flags.c` — K64F port of the event-flags test (all 5 scenarios)
 - `tests/k64f/test_flexcan_loopback.c` — internal loopback: single frame + 5 sequential frames, plus a non-blocking `rx_pending()` check
 - `tests/k64f/test_flexcan_real_bus.c` — real-bus test (loopback disabled), paired with the STM32 test above
+- `tests/k64f/pwm_test.c` — sweeps FTM0_CH0 (PTC1, Motor 1) pulse width 1000↔2000us, printing each step over UART
+- `tests/k64f/servo_sweep_test.c` — continuous 0↔180 degree sweep on all 4 channels simultaneously (PTC1/PTC5/PTC8/PTC9), each channel tracking independent sweep state  
 
 ---
 
