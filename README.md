@@ -65,6 +65,7 @@ All four primitives above live in `kernel/core/` and are genuinely board-agnosti
 - FDCAN1 (PB8=RX (AF9), PB9=TX (AF9) — PA11/PA12 they're tied to USB OTG FS) — verified on a real two-node bus: internal loopback passes, and with an SN65HVD230 transceiver on each board, STM32 and K64F exchange frames continuously with zero ACK failures on either side
 - IWDG (Independent Watchdog, LSI-clocked, software-configurable timeout)
 - PWM (TIM2_CH1, PA0 / Arduino D32, 50Hz/1-2ms hobby servo & ESC convention) — verified with a logic analyzer: clean 20.0ms period, pulse width tracking the requested 1000-2000us value exactly.  
+- ADC1 (PA3 / Arduino A0, ADC1_INP15, single-conversion polling mode, 16-bit resolution) — verified end-to-end
 
 **Sensors**
 - MPU6050
@@ -80,8 +81,9 @@ All four primitives above live in `kernel/core/` and are genuinely board-agnosti
 - `tests/test_fault_handler.c` — deliberately triggers UsageFault/BusFault/MemManage/HardFault and verifies UART dump + Backup SRAM persistence across a real reset
 - `tests/test_mpu_stack_guard.c` — runs a real scheduled task to destruction to verify the MPU stack-overflow guard fires with the correct faulting address
 - `tests/test_iwdg.c` — arms IWDG, proves kicking prevents reset, then deliberately starves it to confirm the board actually resets and the cause is correctly reported
-- `tests/stm/pwm_test.c` — sweeps TIM2_CH1 pulse width 1000↔2000us continuously, printing each step over UART
-- `tests/stm/servo_sweep_test.c` — continuous 0↔180 degree servo sweep via the actuators/servo.c abstraction
+- `tests/stm/pwm_test.c` — sweeps TIM2_CH1 pulse width 1000-2000us continuously, printing each step over UART
+- `tests/stm/servo_sweep_test.c` — continuous 0-180 degree servo sweep via the actuators/servo.c abstraction
+- `tests/stm/adc_test.c` — continuously reads PA3/ADC1_INP15 and prints the value :)
 
 Still improving — development notes at https://auctra.app
 
@@ -123,7 +125,7 @@ Still improving — development notes at https://auctra.app
 - `tests/k64f/test_event_flags.c` — K64F port of the event-flags test (all 5 scenarios)
 - `tests/k64f/test_flexcan_loopback.c` — internal loopback: single frame + 5 sequential frames, plus a non-blocking `rx_pending()` check
 - `tests/k64f/test_flexcan_real_bus.c` — real-bus test (loopback disabled), paired with the STM32 test above
-- `tests/k64f/pwm_test.c` — sweeps FTM0_CH0 (PTC1, Motor 1) pulse width 1000↔2000us, printing each step over UART
+- `tests/k64f/pwm_test.c` — sweeps FTM0_CH0 (PTC1, Motor 1) pulse width 1000-2000us, printing each step over UART
 - `tests/k64f/servo_sweep_test.c` — continuous 0↔180 degree sweep on all 4 channels simultaneously (PTC1/PTC5/PTC8/PTC9), each channel tracking independent sweep state  
 
 ---
