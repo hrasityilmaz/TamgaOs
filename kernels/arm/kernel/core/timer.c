@@ -123,3 +123,20 @@ void timer_service_tick(void)
         }
     }
 }
+
+uint32_t timer_get_next_ready_in_ms(void)
+{
+    uint32_t now = systick_get_ms();
+    uint32_t soonest = 0xFFFFFFFFUL;
+
+    uint32_t saved = sched_critical_enter();
+    for (uint8_t i = 0U; i < TIMER_MAX_COUNT; i++) {
+        if (s_timers[i].in_use && s_timers[i].active) {
+            int32_t remaining = (int32_t)(s_timers[i].deadline_ms - now);
+            uint32_t remaining_ms = (remaining > 0) ? (uint32_t)remaining : 0U;
+            if (remaining_ms < soonest) soonest = remaining_ms;
+        }
+    }
+    sched_critical_exit(saved);
+    return soonest;
+}
