@@ -31,7 +31,6 @@ LDFLAGS += -nostartfiles
 LDFLAGS += -Wl,-u,sched_start_asm
 LDFLAGS += -Wl,-u,SVC_Handler
 
-# C_SRCS  += src/main.c
 AS_SRCS += $(STARTUP)
 
 C_OBJS   = $(C_SRCS:.c=.o)
