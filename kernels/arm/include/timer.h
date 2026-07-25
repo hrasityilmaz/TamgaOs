@@ -13,5 +13,6 @@ void timer_stop(timer_handle_t handle);
 void timer_set_period(timer_handle_t handle, uint32_t period_ms);
 void timer_delete(timer_handle_t handle);
 void timer_service_tick(void);
+uint32_t timer_get_next_ready_in_ms(void);
 
 #endif /* KERNEL_TIMER_H */
