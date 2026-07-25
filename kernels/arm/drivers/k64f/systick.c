@@ -14,6 +14,8 @@
 #include <stdint.h>
 #include "timer.h"
 
+
+
 #define SYST_CSR (*(volatile uint32_t *)0xE000E010U)
 #define SYST_RVR (*(volatile uint32_t *)0xE000E014U)
 #define SYST_CVR (*(volatile uint32_t *)0xE000E018U)
@@ -22,7 +24,16 @@
 #define SYST_CSR_TICKINT   (1UL << 1U)
 #define SYST_CSR_CLKSOURCE (1UL << 2U)   /* 1 = core clock */
 
+#define SYST_CSR_ENABLE     (1UL << 0U)
+#define SYST_CSR_TICKINT    (1UL << 1U)
+#define SYST_CSR_CLKSOURCE  (1UL << 2U)   /* 1 = core clock */
+#define SYST_CSR_COUNTFLAG  (1UL << 16U)  /* ARMv7-M SysTick standard bit — set by hardware when the counter reaches 0 */
+
+#define TICKLESS_TICKS_PER_MS (CORE_CLOCK_HZ / 1000UL)
+#define TICKLESS_MAX_RELOAD  (0x00FFFFFFUL)
+
 static volatile uint32_t s_ticks = 0U;
+static volatile uint8_t s_tickless_active = 0U;
 
 void systick_init(uint32_t core_clock_hz)
 {
@@ -32,8 +43,60 @@ void systick_init(uint32_t core_clock_hz)
     SYST_CSR = SYST_CSR_CLKSOURCE | SYST_CSR_TICKINT | SYST_CSR_ENABLE;
 }
 
+void systick_advance_ms(uint32_t ms)
+{
+    s_ticks += ms;
+}
+
+uint32_t systick_tickless_sleep(uint32_t max_ms)
+{
+    if (max_ms == 0U) {
+        return 0U;
+    }
+
+    uint32_t reload_ticks = max_ms * TICKLESS_TICKS_PER_MS;
+    if ((reload_ticks == 0U) || (reload_ticks > TICKLESS_MAX_RELOAD)) {
+        reload_ticks = TICKLESS_MAX_RELOAD;
+    }
+
+    SYST_CSR &= ~SYST_CSR_ENABLE;
+    SYST_RVR = reload_ticks - 1UL;
+    SYST_CVR = 0UL;
+    s_tickless_active = 1U;
+    SYST_CSR |= (SYST_CSR_ENABLE | SYST_CSR_TICKINT);
+
+    __asm volatile("dsb");
+    __asm volatile("wfi");
+    __asm volatile("isb");
+
+    s_tickless_active = 0U;
+
+    uint32_t elapsed_ticks;
+    if ((SYST_CSR & SYST_CSR_COUNTFLAG) != 0U) {
+        elapsed_ticks = reload_ticks;
+    } else {
+        elapsed_ticks = (reload_ticks - 1UL) - SYST_CVR;
+    }
+
+    uint32_t elapsed_ms = elapsed_ticks / TICKLESS_TICKS_PER_MS;
+    if (elapsed_ms == 0U) {
+        elapsed_ms = 1U;
+    }
+
+    SYST_CSR &= ~SYST_CSR_ENABLE;
+    SYST_RVR = TICKLESS_TICKS_PER_MS - 1UL;
+    SYST_CVR = 0UL;
+    SYST_CSR |= (SYST_CSR_ENABLE | SYST_CSR_TICKINT);
+
+    s_ticks += elapsed_ms;
+    return elapsed_ms;
+}
+
 void SysTick_Handler(void)
 {
+    if (s_tickless_active) {
+        return; 
+    }
     s_ticks++;
     if (sched_is_started()) {
         sched_tick();
