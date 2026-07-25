@@ -33,8 +33,8 @@ C_SRCS += kernel/core/timer.c
 # C_SRCS  += tests/k64f/test_flexcan_real_bus.c
 # C_SRCS  += tests/k64f/pwm_test.c
 # C_SRCS  += tests/k64f/servo_sweep.c
-C_SRCS += tests/k64f/test_software_timer.c
-
+# C_SRCS += tests/k64f/test_software_timer.c
+C_SRCS += tests/k64f/test_tickless_idle.c
 # Tick source selection — default: native ARM SysTick 
 #   Usage: make BOARD=k64f TICK_SOURCE=pit
 TICK_SOURCE ?= systick
