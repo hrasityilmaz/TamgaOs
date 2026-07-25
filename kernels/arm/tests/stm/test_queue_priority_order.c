@@ -137,8 +137,6 @@ int main(void)
 
     uart_puts("TamgaOS STM32H753ZI @ 480MHz\r\n");
     uart_puts("Queue Priority-Ordered Wait Test\r\n");
-    uart_puts("Faz 1: receive-side priority (queue bos)\r\n");
-    uart_puts("Faz 2: send-side priority (queue dolu)\r\n\r\n");
 
     queue_init(&g_q_recv_test, g_q_recv_test_storage, sizeof(uint32_t), 4U);
 
