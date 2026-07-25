@@ -53,6 +53,9 @@ static task_t s_idle_tcb;
 #define MPU_RASR_SIZE_32B       (4UL << MPU_RASR_SIZE_SHIFT) /* 2^(4+1)=32B  */
 #define MPU_RASR_ENABLE         (1UL << 0U)
 
+/* Max sleep time */
+#define TICKLESS_MAX_SLEEP_MS  (1000U) 
+
 static void mpu_init_stack_guard(void) {
   MPU_CTRL = 0U;
   MPU_CTRL = MPU_CTRL_ENABLE | MPU_CTRL_PRIVDEFENA;
@@ -104,9 +107,28 @@ static void mpu_set_stack_guard(const task_t *t) {
 }
 
 static void idle_task_func(void) {
+  /*
   for (;;) {
     __asm volatile("wfi");
   }
+  */
+  for (;;) {
+        uint32_t next_task_ms  = sched_get_next_wakeup_ms();
+        uint32_t next_timer_ms = timer_get_next_ready_in_ms();
+
+        uint32_t idle_budget = (next_task_ms < next_timer_ms) ? next_task_ms : next_timer_ms;
+        if (idle_budget > TICKLESS_MAX_SLEEP_MS) idle_budget = TICKLESS_MAX_SLEEP_MS;
+
+        if (idle_budget == 0U) {
+            __asm volatile("wfi");
+            continue;
+        }
+
+        uint32_t elapsed_ms = systick_tickless_sleep(idle_budget);
+
+        sched_tick_n(elapsed_ms);
+        timer_service_tick();   /* zaten mutlak deadline karşılaştırıyor, _n gerekmiyor */
+    }
 }
 
 static inline void trigger_pendsv(void) {
@@ -239,7 +261,51 @@ static void sched_commit_next(void) {
   mpu_set_stack_guard(g_next_task);
 }
 
+void sched_tick_n(uint32_t elapsed_ms)
+{
+    for (uint8_t i = 0U; i < s_task_count; i++) {
+        task_t *t = &s_tasks[i];
+        if ((t->state == TASK_BLOCKED) && (t->delay_ticks > 0U)) {
+            if (t->delay_ticks <= elapsed_ms) {
+                t->delay_ticks = 0U;
+                if (t->wait_list_head != NULL) {
+                    sched_wait_list_remove(t->wait_list_head, t);
+                    t->wait_list_head = NULL;
+                    t->timed_out = 1U;
+                }
+                t->state = TASK_READY;
+            } else {
+                t->delay_ticks -= elapsed_ms;
+            }
+        }
+    }
+
+    if ((g_current_task != NULL) && (g_current_task->state == TASK_RUNNING)) {
+        g_current_task->state = TASK_READY;
+    }
+
+    sched_commit_next();
+
+    if (g_next_task != g_current_task) {
+        trigger_pendsv();
+    }
+}
+
+uint32_t sched_get_next_wakeup_ms(void)
+{
+    uint32_t soonest = 0xFFFFFFFFUL;
+    uint32_t p = sched_critical_enter();
+    for (uint8_t i = 0U; i < s_task_count; i++) {
+        if ((s_tasks[i].state == TASK_BLOCKED) && (s_tasks[i].delay_ticks > 0U)) {
+            if (s_tasks[i].delay_ticks < soonest) soonest = s_tasks[i].delay_ticks;
+        }
+    }
+    sched_critical_exit(p);
+    return soonest;
+}
+
 void sched_tick(void) {
+  /*
   for (uint8_t i = 0U; i < s_task_count; i++) {
     task_t *t = &s_tasks[i];
     if ((t->state == TASK_BLOCKED) && (t->delay_ticks > 0U)) {
@@ -264,6 +330,8 @@ void sched_tick(void) {
   if (g_next_task != g_current_task) {
     trigger_pendsv();
   }
+  */
+  sched_tick_n(1U);
 }
 
 void sched_delay_ms(uint32_t ms) {
@@ -387,3 +455,4 @@ uint8_t sched_check_stack_canaries(void) {
   }
   return corrupted;
 }
+
