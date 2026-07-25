@@ -1,6 +1,7 @@
 #include "systick.h"
 #include "scheduler.h"
 #include <stdint.h>
+#include "timer.h"
 
 #define SYST_CSR (*(volatile uint32_t *)0xE000E010U)
 #define SYST_RVR (*(volatile uint32_t *)0xE000E014U)
@@ -24,6 +25,7 @@ void SysTick_Handler(void) {
     if (sched_is_started()) {
         sched_tick();
     }
+    timer_service_tick(); // Software timer tick !
 }
 
 void systick_delay_ms(uint32_t ms) {
