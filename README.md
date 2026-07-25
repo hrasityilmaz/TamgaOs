@@ -19,6 +19,10 @@ Started as a learning project — now focused on deterministic scheduling, memor
 - Event flags (event groups) — bitmask-based `EVENT_WAIT_ANY` / `EVENT_WAIT_ALL` waiting with optional auto-clear on wake
 - Timeout support across the board — `mutex_lock_timeout`, `queue_send_timeout`, `queue_receive_timeout`, `event_wait_timeout` all bound their wait on an absolute deadline (via `systick_get_ms()`), so a task that wakes and loses a race re-arms only the *remaining* budget instead of the full timeout again
 - Critical section (cpsid/cpsie)
+- Software Timer — fixed-size static pool (no dynamic allocation) of one-shot and auto-reload timers
+- Tickless Idle — Already not checking every 1ms tick. Verified on both boards with zero measured drift: a task requesting `sched_delay_ms(500)` woke up at exactly 500ms elapsed.
+
+ (note: STM32H753ZI's SysTick is clocked from AHB/8, not the core clock directly )
 
 All four primitives above live in `kernel/core/` and are genuinely board-agnostic — same source file, same behavior, verified independently on both STM32H753ZI and K64F (priority-order, ANY/ALL/auto_clear, and both timeout-expiry/timeout-success paths all pass identically on both ports).
 
@@ -56,6 +60,7 @@ All four primitives above live in `kernel/core/` and are genuinely board-agnosti
 - Queue — priority-ordered wait on send and receive, with a bounded (`_timeout`) variant
 - Event flags — ANY/ALL/auto_clear, with a bounded (`_timeout`) variant
 - Critical section (cpsid/cpsie)
+- Software Timer + Tickless Idle — same shared kernel implementation, verified independently on this board
 
 **Drivers**
 - SysTick (1ms tick, AHB/8) — also the shared kernel's monotonic time source (`systick_get_ms()`) used by every `_timeout` primitive above
@@ -71,19 +76,21 @@ All four primitives above live in `kernel/core/` and are genuinely board-agnosti
 - MPU6050
 
 **Tests**
-- `tests/test_mutex_priority_inheritance.c` — validates elevate/restore behavior under LOW/HIGH/MED priority contention
-- `tests/test_queue_priority_order.c` — validates priority-ordered wake on both the send side and the receive side of a queue
-- `tests/test_event_flags.c` — validates ANY/ALL wake, auto_clear, and both timeout-expiry/timeout-success paths
-- `tests/test_timeout.c` — validates `mutex_lock_timeout`/`queue_send_timeout`/`queue_receive_timeout` against both an expiring wait and a wait satisfied just before the deadline
-- `tests/imu_kalman_fdcan.c` — imu kalman fdcan test
-- `tests/test_fdcan1.c` — internal loopback: send/receive round-trip, byte-for-byte
+- `tests/stm/test_mutex_priority_inheritance.c` — validates elevate/restore behavior under LOW/HIGH/MED priority contention
+- `tests/stm/test_queue_priority_order.c` — validates priority-ordered wake on both the send side and the receive side of a queue
+- `tests/stm/test_event_flags.c` — validates ANY/ALL wake, auto_clear, and both timeout-expiry/timeout-success paths
+- `tests/stm/test_timeout.c` — validates `mutex_lock_timeout`/`queue_send_timeout`/`queue_receive_timeout` against both an expiring wait and a wait satisfied just before the deadline
+- `tests/stm/imu_kalman_fdcan.c` — imu kalman fdcan test
+- `tests/stm/test_fdcan1.c` — internal loopback: send/receive round-trip, byte-for-byte
 - `tests/stm/test_fdcan_real_bus.c` — real-bus test (loopback disabled): periodic TX + continuous RX polling, paired with the matching K64F test below
-- `tests/test_fault_handler.c` — deliberately triggers UsageFault/BusFault/MemManage/HardFault and verifies UART dump + Backup SRAM persistence across a real reset
-- `tests/test_mpu_stack_guard.c` — runs a real scheduled task to destruction to verify the MPU stack-overflow guard fires with the correct faulting address
-- `tests/test_iwdg.c` — arms IWDG, proves kicking prevents reset, then deliberately starves it to confirm the board actually resets and the cause is correctly reported
+- `tests/stm/test_fault_handler.c` — deliberately triggers UsageFault/BusFault/MemManage/HardFault and verifies UART dump + Backup SRAM persistence across a real reset
+- `tests/stm/test_mpu_stack_guard.c` — runs a real scheduled task to destruction to verify the MPU stack-overflow guard fires with the correct faulting address
+- `tests/stm/test_iwdg.c` — arms IWDG, proves kicking prevents reset, then deliberately starves it to confirm the board actually resets and the cause is correctly reported
 - `tests/stm/pwm_test.c` — sweeps TIM2_CH1 pulse width 1000-2000us continuously, printing each step over UART
 - `tests/stm/servo_sweep_test.c` — continuous 0-180 degree servo sweep via the actuators/servo.c abstraction
 - `tests/stm/adc_test.c` — continuously reads PA3/ADC1_INP15 and prints the value :)
+- `tests/stm/test_software_timer.c` — validates one-shot and auto-reload software timers: exact fire counts, `timer_stop()` correctly halting an active periodic timer, and pool-exhaustion behavior
+- `tests/test_tickless_idle.c` — verifies a task delayed via `sched_delay_ms(500)` wakes up at exactly 500ms elapsed with zero measured drift over dozens of cycles
 
 Still improving — development notes at https://auctra.app
 
@@ -112,6 +119,7 @@ Still improving — development notes at https://auctra.app
 - Queue — priority-ordered wait on send and receive, with a bounded (`_timeout`) variant
 - Event flags — ANY/ALL/auto_clear, with a bounded (`_timeout`) variant
 - Critical section (cpsid/cpsie)
+- Software Timer + Tickless Idle — same shared kernel implementation, verified independently on this board
 
 **Drivers**
 - SysTick (default tick source — see Kernel above) or PIT (32-bit, opt-in via `TICK_SOURCE=pit`)
@@ -127,6 +135,8 @@ Still improving — development notes at https://auctra.app
 - `tests/k64f/test_flexcan_real_bus.c` — real-bus test (loopback disabled), paired with the STM32 test above
 - `tests/k64f/pwm_test.c` — sweeps FTM0_CH0 (PTC1, Motor 1) pulse width 1000-2000us, printing each step over UART
 - `tests/k64f/servo_sweep_test.c` — continuous 0↔180 degree sweep on all 4 channels simultaneously (PTC1/PTC5/PTC8/PTC9), each channel tracking independent sweep state  
+- `tests/k64f/test_software_timer.c` — K64F port of the software timer test (same three scenarios as the STM32 version)
+- `tests/k64f/test_tickless_idle.c` — K64F port of the tickless idle drift test
 
 ---
 
