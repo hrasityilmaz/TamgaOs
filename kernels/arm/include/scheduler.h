@@ -31,6 +31,9 @@ void sched_block(void);
 void sched_block_locked(void);
 void sched_wake_task(task_t *t);
 uint8_t sched_is_started(void);
+// Tickless issue
+void sched_tick_n(uint32_t elapsed_ms);
+uint32_t sched_get_next_wakeup_ms(void);
 
 /*  Diagnostics  */
 uint8_t sched_check_stack_canaries(void);
