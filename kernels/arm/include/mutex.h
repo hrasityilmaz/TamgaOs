@@ -5,6 +5,8 @@
 #include <stddef.h>
 #include <stdint.h>
 
+/* Mutexes must NEVER be locked or unlocked from ISR context */
+
 typedef struct {
   // volatile task_t *task;
   task_t *volatile task;
