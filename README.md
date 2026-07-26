@@ -21,6 +21,7 @@ Started as a learning project — now focused on deterministic scheduling, memor
 - Critical section (cpsid/cpsie)
 - Software Timer — fixed-size static pool (no dynamic allocation) of one-shot and auto-reload timers
 - Tickless Idle — Already not checking every 1ms tick. Verified on both boards with zero measured drift: a task requesting `sched_delay_ms(500)` woke up at exactly 500ms elapsed.
+- Deadline/Response Time Monitor — per-task execution-time tracking (min/avg/max, overrun count vs. budget), independent of scheduler internals — wraps any periodic task's work with begin()/end() timing calls. The kind of timing evidence a DO-178C-style certification process would expect — currently measures response time (wall-clock, including preemption), not WCET.
 
  (note: STM32H753ZI's SysTick is clocked from AHB/8, not the core clock directly )
 
@@ -91,6 +92,7 @@ All four primitives above live in `kernel/core/` and are genuinely board-agnosti
 - `tests/stm/adc_test.c` — continuously reads PA3/ADC1_INP15 and prints the value :)
 - `tests/stm/test_software_timer.c` — validates one-shot and auto-reload software timers: exact fire counts, `timer_stop()` correctly halting an active periodic timer, and pool-exhaustion behavior
 - `tests/test_tickless_idle.c` — verifies a task delayed via `sched_delay_ms(500)` wakes up at exactly 500ms elapsed with zero measured drift over dozens of cycles
+- `tests/stm/test_deadline_monitor.c` — simulated periodic task with a 10ms max time, 30 cycles, 4 deliberately-heavy cycles to verify overrun detection
 
 Still improving — development notes at https://auctra.app
 
@@ -137,6 +139,7 @@ Still improving — development notes at https://auctra.app
 - `tests/k64f/servo_sweep_test.c` — continuous 0↔180 degree sweep on all 4 channels simultaneously (PTC1/PTC5/PTC8/PTC9), each channel tracking independent sweep state  
 - `tests/k64f/test_software_timer.c` — K64F port of the software timer test (same three scenarios as the STM32 version)
 - `tests/k64f/test_tickless_idle.c` — K64F port of the tickless idle drift test
+- `tests/k64f/test_deadline_monitor.c` — simulated periodic task with a 10ms max time, 30 cycles, 4 deliberately-heavy cycles to verify overrun detection
 
 ---
 
