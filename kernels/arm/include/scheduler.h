@@ -34,6 +34,10 @@ uint8_t sched_is_started(void);
 // Tickless issue
 void sched_tick_n(uint32_t elapsed_ms);
 uint32_t sched_get_next_wakeup_ms(void);
+void sched_tickless_idle_enable(void);
+void sched_tickless_idle_disable(void);
+uint8_t sched_tickless_idle_is_enabled(void);
+uint32_t sched_get_idle_loop_count(void);
 
 /*  Diagnostics  */
 uint8_t sched_check_stack_canaries(void);
