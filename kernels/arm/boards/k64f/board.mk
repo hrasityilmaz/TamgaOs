@@ -25,6 +25,7 @@ C_SRCS  += kernel/core/queue.c
 C_SRCS  += kernel/core/event.c
 C_SRCS  += kernel/core/hardfault_minimal.c
 C_SRCS += kernel/core/timer.c
+C_SRCS += kernel/core/deadline_monitor.c
 # C_SRCS  += src/k64f/main.c
 # C_SRCS  += tests/k64f/fpu_test.c
 # C_SRCS  += tests/k64f/test_queue_priority_order.c
@@ -34,7 +35,9 @@ C_SRCS += kernel/core/timer.c
 # C_SRCS  += tests/k64f/pwm_test.c
 # C_SRCS  += tests/k64f/servo_sweep.c
 # C_SRCS += tests/k64f/test_software_timer.c
-C_SRCS += tests/k64f/test_tickless_idle.c
+# C_SRCS += tests/k64f/test_tickless_idle.c
+# C_SRCS += tests/k64f/test_deadline_monitor.c
+C_SRCS += tests/k64f/test_isr_safe_primitives.c
 # Tick source selection — default: native ARM SysTick 
 #   Usage: make BOARD=k64f TICK_SOURCE=pit
 TICK_SOURCE ?= systick
