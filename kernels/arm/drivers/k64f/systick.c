@@ -89,6 +89,7 @@ uint32_t systick_tickless_sleep(uint32_t max_ms)
     SYST_CSR |= (SYST_CSR_ENABLE | SYST_CSR_TICKINT);
 
     s_ticks += elapsed_ms;
+    systick_isr_hook(); 
     return elapsed_ms;
 }
 
@@ -102,6 +103,7 @@ void SysTick_Handler(void)
         sched_tick();
     }
     timer_service_tick(); // Software timer tick
+    systick_isr_hook();
 }
 
 void systick_delay_ms(uint32_t ms)
