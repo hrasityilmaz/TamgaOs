@@ -4,18 +4,26 @@
 #include "task.h"
 #include <stddef.h>
 #include "uart.h"
+#include "tamgaos_config.h"
+
+static volatile uint8_t s_tickless_idle_enabled = TAMGAOS_TICKLESS_IDLE_DEFAULT;
 
 task_t *volatile g_current_task;
 task_t *volatile g_next_task;
 static volatile uint8_t s_started;
 
-uint8_t sched_is_started(void) {
-  return s_started;
-}
-
+static volatile uint32_t s_idle_loop_count = 0U;
 static uint8_t s_task_count;
 static task_t s_tasks[TASK_MAX];
 static task_t s_idle_tcb;
+
+uint32_t sched_get_idle_loop_count(void) { 
+  return s_idle_loop_count; 
+}
+
+uint8_t sched_is_started(void) {
+  return s_started;
+}
 
 /*
  * Stack canary: placed one word ABOVE the MPU-guarded region
@@ -62,6 +70,12 @@ static void mpu_init_stack_guard(void) {
   __asm volatile("dsb");
   __asm volatile("isb");
 }
+
+void sched_tickless_idle_enable(void)  { s_tickless_idle_enabled = 1U; }
+
+void sched_tickless_idle_disable(void) { s_tickless_idle_enabled = 0U; }
+
+uint8_t sched_tickless_idle_is_enabled(void) { return s_tickless_idle_enabled; }
 
 /*
  * TODO:
@@ -112,6 +126,7 @@ static void idle_task_func(void) {
     __asm volatile("wfi");
   }
   */
+  /*
   for (;;) {
         uint32_t next_task_ms  = sched_get_next_wakeup_ms();
         uint32_t next_timer_ms = timer_get_next_ready_in_ms();
@@ -127,7 +142,30 @@ static void idle_task_func(void) {
         uint32_t elapsed_ms = systick_tickless_sleep(idle_budget);
 
         sched_tick_n(elapsed_ms);
-        timer_service_tick();   /* zaten mutlak deadline karşılaştırıyor, _n gerekmiyor */
+        timer_service_tick();  
+    }
+  */
+  for (;;) {
+        s_idle_loop_count++;
+        if (!s_tickless_idle_enabled) {
+            __asm volatile("wfi");
+            continue;
+        }
+
+        uint32_t next_task_ms  = sched_get_next_wakeup_ms();
+        uint32_t next_timer_ms = timer_get_next_ready_in_ms();
+
+        uint32_t idle_budget = (next_task_ms < next_timer_ms) ? next_task_ms : next_timer_ms;
+        if (idle_budget > TICKLESS_MAX_SLEEP_MS) idle_budget = TICKLESS_MAX_SLEEP_MS;
+
+        if (idle_budget == 0U) {
+            __asm volatile("wfi");
+            continue;
+        }
+
+        uint32_t elapsed_ms = systick_tickless_sleep(idle_budget);
+        sched_tick_n(elapsed_ms);
+        timer_service_tick();
     }
 }
 
