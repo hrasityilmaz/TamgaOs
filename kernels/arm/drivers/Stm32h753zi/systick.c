@@ -3,11 +3,6 @@
  * Identical technique to the K64F port's systick.c: Cortex-M4 and
  * Cortex-M7 share the same SysTick register block at 0xE000E010.
  *
- * CLKSOURCE=0 (external/AHB-divided reference) is used here — on
- * this board SysTick is fed by AHB/8, NOT the core clock directly.
- * This matters for tickless idle math (see TICKLESS_TICKS_PER_MS
- * below) — getting this wrong made every tickless sleep request
- * last 8x longer than requested during initial bring-up.
  */
 
 #include "systick.h"
@@ -21,9 +16,7 @@
 
 #define SYST_CSR_ENABLE     (1UL << 0U)
 #define SYST_CSR_TICKINT    (1UL << 1U)
-#define SYST_CSR_COUNTFLAG  (1UL << 16U)  /* ARMv7-M standard bit — set
-                                              by hardware when the
-                                              counter reaches 0 */
+#define SYST_CSR_COUNTFLAG  (1UL << 16U) 
 /* CLKSOURCE=0: AHB/8 — STM32H7 SysTick uses AHB/8 */
 #define TICKLESS_TICKS_PER_MS ((CORE_CLOCK_HZ / 8UL) / 1000UL)
 #define TICKLESS_MAX_RELOAD  (0x00FFFFFFUL)
@@ -80,6 +73,7 @@ uint32_t systick_tickless_sleep(uint32_t max_ms)
     SYST_CVR = 0UL;
     SYST_CSR |= (SYST_CSR_ENABLE | SYST_CSR_TICKINT);
     s_ticks += elapsed_ms;
+    systick_isr_hook(); 
     return elapsed_ms;
 }
 
@@ -91,7 +85,8 @@ void SysTick_Handler(void) {
     if (sched_is_started()) {
         sched_tick();
     }
-    timer_service_tick(); 
+    timer_service_tick(); /* software timer */
+    systick_isr_hook(); /* isr safe hook */
 }
 
 void systick_delay_ms(uint32_t ms) {
