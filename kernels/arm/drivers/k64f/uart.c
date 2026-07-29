@@ -9,6 +9,24 @@ static volatile uint8_t  s_tx_buf[UART_TX_BUF_SIZE];
 static volatile uint32_t s_tx_head;
 static volatile uint32_t s_tx_tail;
 
+#define UART_RX_BUF_SIZE (64U)
+static volatile uint8_t  s_rx_buf[UART_RX_BUF_SIZE];
+static volatile uint32_t s_rx_head;
+static volatile uint32_t s_rx_tail;
+
+/*
+ * UART_S1_RDRF_MASK — NOT present in mmio_deviation.h at the time
+ * this was written. Bit position taken from the K64 Sub-Family
+ * Reference Manual's UART0_S1 register table (RDRF = bit 5), the
+ * same register this driver already reads TDRE (bit 7) from. If
+ * mmio_deviation.h later adds its own UART_S1_RDRF_MASK, prefer that
+ * one and remove this local definition to avoid a conflicting
+ * redefinition.
+ */
+#ifndef UART_S1_RDRF_MASK
+#define UART_S1_RDRF_MASK  (1UL << 5U)
+#endif
+
 void uart_init(uint32_t baud) {
   SIM->SCGC4 |= SIM_SCGC4_UART0_MASK;
   SIM->SCGC5 |= SIM_SCGC5_PORTB_MASK;
@@ -23,8 +41,10 @@ void uart_init(uint32_t baud) {
   UART0->C1  = 0U;
   s_tx_head = 0U;
   s_tx_tail = 0U;
+  s_rx_head = 0U;
+  s_rx_tail = 0U;
 
-  UART0->C2 = UART_C2_TE_MASK | UART_C2_RE_MASK;
+  UART0->C2 = UART_C2_TE_MASK | UART_C2_RE_MASK | (1UL << 5U);  /* + RIE, RX interrupt enable */
   volatile uint8_t *nvic_ipr = (volatile uint8_t *)0xE000E400UL;
   nvic_ipr[31] = 0x80U;
   volatile uint32_t *nvic_iser = (volatile uint32_t *)0xE000E100UL;
@@ -38,6 +58,15 @@ void UART0_RX_TX_IRQHandler(void) {
       s_tx_tail = (s_tx_tail + 1U) % UART_TX_BUF_SIZE;
     } else {
       UART0->C2 &= ~(1U << 7U);
+    }
+  }
+
+  if (UART0->S1 & UART_S1_RDRF_MASK) {
+    uint8_t byte = UART0->D;
+    uint32_t next_head = (s_rx_head + 1U) % UART_RX_BUF_SIZE;
+    if (next_head != s_rx_tail) {   /* drop the byte if the ring is full */
+      s_rx_buf[s_rx_head] = byte;
+      s_rx_head = next_head;
     }
   }
 }
@@ -56,6 +85,13 @@ void uart_puts(const char *s) {
     uart_putc(*s);
     s++;
   }
+}
+
+char uart_getc(void) {
+  while (s_rx_head == s_rx_tail) { }
+  char c = (char)s_rx_buf[s_rx_tail];
+  s_rx_tail = (s_rx_tail + 1U) % UART_RX_BUF_SIZE;
+  return c;
 }
 
 static void uart_put_uint(uint32_t val, uint8_t base, uint8_t uppercase)
@@ -106,7 +142,7 @@ void uart_printf(const char *fmt, ...)
             continue;
         }
 
-        fmt++;   /* skip '%' */
+        fmt++;
         switch (*fmt) {
             case 'u':
                 uart_put_uint(va_arg(args, uint32_t), 10U, 0U);
