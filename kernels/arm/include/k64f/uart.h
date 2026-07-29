@@ -8,5 +8,6 @@ void uart_init(uint32_t baud);
 void uart_putc(char c);
 void uart_puts(const char *s);
 void uart_printf(const char *fmt, ...);
+char uart_getc(void);
 
 #endif
