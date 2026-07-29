@@ -107,4 +107,7 @@ void pwm_debug_print_regs(void)
     uart_printf("[PWM-DEBUG] FTM3_SC=0x%x FTM3_MOD=%u FTM3_C4V=%u FTM3_C5V=%u\r\n",
                 (unsigned int)FTM3_SC, (unsigned int)FTM3_MOD,
                 (unsigned int)FTM3_C4V, (unsigned int)FTM3_C5V);
+    uart_printf("[PWM-LIVE] SC=0x%x MOD=%u CNT=%u C0V=%u\r\n",
+            (unsigned int)FTM0_SC, (unsigned int)FTM0_MOD,
+            (unsigned int)FTM0_CNT, (unsigned int)FTM0_C0V);
 }
