@@ -22,10 +22,12 @@ Started as a learning project — now focused on deterministic scheduling, memor
 - Software Timer — fixed-size static pool (no dynamic allocation) of one-shot and auto-reload timers
 - Tickless Idle — Already not checking every 1ms tick. Verified on both boards with zero measured drift: a task requesting `sched_delay_ms(500)` woke up at exactly 500ms elapsed.
 - Deadline/Response Time Monitor — per-task execution-time tracking (min/avg/max, overrun count vs. budget), independent of scheduler internals — wraps any periodic task's work with begin()/end() timing calls. The kind of timing evidence a DO-178C-style certification process would expect — currently measures response time (wall-clock, including preemption), not WCET.
-
  (note: STM32H753ZI's SysTick is clocked from AHB/8, not the core clock directly )
+- Task Notification  the fastest signal path in the kernel tested on m4 and m7
 
-All four primitives above live in `kernel/core/` and are genuinely board-agnostic — same source file, same behavior, verified independently on both STM32H753ZI and K64F (priority-order, ANY/ALL/auto_clear, and both timeout-expiry/timeout-success paths all pass identically on both ports).
+
+
+
 
 ## Actuators (shared abstraction, board-specific PWM backend)
 
@@ -93,7 +95,7 @@ All four primitives above live in `kernel/core/` and are genuinely board-agnosti
 - `tests/stm/test_software_timer.c` — validates one-shot and auto-reload software timers: exact fire counts, `timer_stop()` correctly halting an active periodic timer, and pool-exhaustion behavior
 - `tests/test_tickless_idle.c` — verifies a task delayed via `sched_delay_ms(500)` wakes up at exactly 500ms elapsed with zero measured drift over dozens of cycles
 - `tests/stm/test_deadline_monitor.c` — simulated periodic task with a 10ms max time, 30 cycles, 4 deliberately-heavy cycles to verify overrun detection
-
+- `tests/test_task_notify.c` — validates give-then-wait, timeout, wait-then-give, and ISR-context notification scenarios
 Still improving — development notes at https://auctra.app
 
 ---
@@ -140,7 +142,7 @@ Still improving — development notes at https://auctra.app
 - `tests/k64f/test_software_timer.c` — K64F port of the software timer test (same three scenarios as the STM32 version)
 - `tests/k64f/test_tickless_idle.c` — K64F port of the tickless idle drift test
 - `tests/k64f/test_deadline_monitor.c` — simulated periodic task with a 10ms max time, 30 cycles, 4 deliberately-heavy cycles to verify overrun detection
-
+- `tests/k64f/test_task_notify.c` — K64F port of the task notification test, same four scenarios
 ---
 
 ## x86 port — Zig & C kernel
