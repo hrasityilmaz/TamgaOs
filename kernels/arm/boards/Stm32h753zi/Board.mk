@@ -19,14 +19,30 @@ C_SRCS  += kernel/core/semaphore.c
 C_SRCS  += kernel/core/queue.c
 C_SRCS += kernel/core/timer.c
 C_SRCS += kernel/core/deadline_monitor.c
-# For tests close main and open only one test all have main() !!
+C_SRCS += kernel/core/hardfault.c
+C_SRCS += kernel/core/fault_log.c
+C_SRCS += kernel/core/event.c
+C_SRCS += kernel/core/notify.c
+
+# Drivers
 C_SRCS  += drivers/stm32h753zi/uart.c
 C_SRCS  += drivers/stm32h753zi/rcc.c
 C_SRCS += drivers/stm32h753zi/systick.c
 C_SRCS += drivers/stm32h753zi/i2c.c
 C_SRCS += drivers/stm32h753zi/pwm.c
 C_SRCS += drivers/stm32h753zi/adc.c
+C_SRCS += drivers/stm32h753zi/fdcan.c
+C_SRCS += drivers/stm32h753zi/iwdg.c
+
+
 C_SRCS += actuators/stm/servo.c
+C_SRCS += sensors/mpu6050.c
+
+C_SRCS += controls/kalman.c
+
+
+# For tests close main and open only one test all have main() !!
+# TESTS #
 # C_SRCS += src/stm32h753zi/main.c
 # C_SRCS += tests/test_queue_priority_order.c
 # C_SRCS += tests/test_mpu_stack_guard.c
@@ -40,16 +56,11 @@ C_SRCS += actuators/stm/servo.c
 # C_SRCS += tests/stm/adc_test.c
 # C_SRCS += tests/stm/test_software_timer.c
 # C_SRCS += tests/stm/test_tickless_idle.c
-C_SRCS += tests/stm/test_deadline_monitor.c
+# C_SRCS += tests/stm/test_deadline_monitor.c
 # C_SRCS += tests/stm/test_isr_safe_primitives.c
 # C_SRCS += tests/stm/test_tickless_config_compare.c
-C_SRCS += sensors/mpu6050.c
-C_SRCS += drivers/stm32h753zi/fdcan.c
-C_SRCS += controls/kalman.c
-C_SRCS += kernel/core/hardfault.c
-C_SRCS += kernel/core/fault_log.c
-C_SRCS += kernel/core/event.c
-C_SRCS += drivers/stm32h753zi/iwdg.c
+C_SRCS += tests/stm/test_task_notify.c
+
 
 
 PYOCD_TARGET = stm32h743xx
