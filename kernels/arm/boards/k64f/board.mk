@@ -14,12 +14,6 @@ AS_SRCS += kernel/arch/cortex_m4/sched_start.s
 AS_SRCS += kernel/arch/cortex_m4/pendsv_handler.s
 
 C_SRCS  += kernel/core/scheduler.c
-C_SRCS  += drivers/k64f/uart.c
-C_SRCS  += drivers/k64f/mcg.c
-C_SRCS  += drivers/k64f/flexcan.c
-C_SRCS  += drivers/k64f/pwm.c
-C_SRCS  += drivers/k64f/adc.c
-C_SRCS  += actuators/k64f/servo.c
 C_SRCS  += kernel/core/mutex.c 
 C_SRCS  += kernel/core/semaphore.c
 C_SRCS  += kernel/core/queue.c 
@@ -27,6 +21,18 @@ C_SRCS  += kernel/core/event.c
 C_SRCS  += kernel/core/hardfault_minimal.c
 C_SRCS += kernel/core/timer.c
 C_SRCS += kernel/core/deadline_monitor.c
+C_SRCS += kernel/core/notify.c
+
+# Drivers 
+C_SRCS  += drivers/k64f/uart.c
+C_SRCS  += drivers/k64f/mcg.c
+C_SRCS  += drivers/k64f/flexcan.c
+C_SRCS  += drivers/k64f/pwm.c
+C_SRCS  += drivers/k64f/adc.c
+C_SRCS  += actuators/k64f/servo.c
+
+
+# TESTS #
 # C_SRCS  += src/k64f/main.c
 # C_SRCS  += tests/k64f/fpu_test.c
 # C_SRCS  += tests/k64f/test_queue_priority_order.c
@@ -44,7 +50,9 @@ C_SRCS += kernel/core/deadline_monitor.c
 # C_SRCS += tests/k64f/esc_pot_full_manual.c
 # C_SRCS += tests/k64f/esc_motor_test.c
 # C_SRCS += tests/k64f/pwm_4ch_test.c
-C_SRCS += tests/k64f/pwm_4ch_pot_test.c
+# C_SRCS += tests/k64f/pwm_4ch_pot_test.c
+C_SRCS += tests/k64f/test_task_notify.c
+
 # Tick source selection — default: native ARM SysTick 
 #   Usage: make BOARD=k64f TICK_SOURCE=pit
 TICK_SOURCE ?= systick
