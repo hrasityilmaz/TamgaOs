@@ -244,6 +244,8 @@ int8_t sched_task_create(void (*func)(void), uint8_t priority) {
   t->timed_out = 0U;
   t->sp = task_stack_init(&t->stack[TASK_STACK_SIZE], func);
   t->stack[TASK_STACK_CANARY_INDEX] = TASK_STACK_CANARY_VALUE;
+  t->notify_pending = 0U;
+  t->notify_value   = 0U;
   s_task_count++;
   sched_critical_exit(p);
 
