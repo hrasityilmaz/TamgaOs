@@ -22,6 +22,7 @@ C_SRCS  += kernel/core/hardfault_minimal.c
 C_SRCS += kernel/core/timer.c
 C_SRCS += kernel/core/deadline_monitor.c
 C_SRCS += kernel/core/notify.c
+C_SRCS += kernel/core/stack_monitor.c
 
 # Drivers 
 C_SRCS  += drivers/k64f/uart.c
@@ -50,8 +51,9 @@ C_SRCS  += actuators/k64f/servo.c
 # C_SRCS += tests/k64f/esc_pot_full_manual.c
 # C_SRCS += tests/k64f/esc_motor_test.c
 # C_SRCS += tests/k64f/pwm_4ch_test.c
-# C_SRCS += tests/k64f/pwm_4ch_pot_test.c
-C_SRCS += tests/k64f/test_task_notify.c
+C_SRCS += tests/k64f/pwm_4ch_pot_test.c
+# C_SRCS += tests/k64f/test_task_notify.c
+# C_SRCS += tests/k64f/test_stack_monitor.c
 
 # Tick source selection — default: native ARM SysTick 
 #   Usage: make BOARD=k64f TICK_SOURCE=pit
