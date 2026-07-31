@@ -23,6 +23,7 @@ C_SRCS += kernel/core/hardfault.c
 C_SRCS += kernel/core/fault_log.c
 C_SRCS += kernel/core/event.c
 C_SRCS += kernel/core/notify.c
+C_SRCS += kernel/core/stack_monitor.c
 
 # Drivers
 C_SRCS  += drivers/stm32h753zi/uart.c
@@ -37,7 +38,7 @@ C_SRCS += drivers/stm32h753zi/iwdg.c
 
 C_SRCS += actuators/stm/servo.c
 C_SRCS += sensors/mpu6050.c
-
+C_SRCS += sensors/bmp280.c
 C_SRCS += controls/kalman.c
 
 
@@ -59,9 +60,10 @@ C_SRCS += controls/kalman.c
 # C_SRCS += tests/stm/test_deadline_monitor.c
 # C_SRCS += tests/stm/test_isr_safe_primitives.c
 # C_SRCS += tests/stm/test_tickless_config_compare.c
-C_SRCS += tests/stm/test_task_notify.c
-
-
+# C_SRCS += tests/stm/test_task_notify.c
+# C_SRCS += tests/stm/test_stack_monitor.c
+C_SRCS += tests/stm/test_bmp280.c
+# C_SRCS += tests/stm/test_i2c_scan.c
 
 PYOCD_TARGET = stm32h743xx
 BOARD_INCLUDES += -Iinclude/stm32h753zi
