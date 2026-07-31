@@ -101,20 +101,38 @@ void i2c_init(void){
 }
 
 int8_t i2c_write(uint8_t addr, const uint8_t *data, uint8_t len){
-    if (i2c_wait(&I2C1_ISR, I2C_ISR_BUSY, 0) < 0) return -1; // Wait till free
+    if (i2c_wait(&I2C1_ISR, I2C_ISR_BUSY, 0) < 0) return -1;
+
     I2C1_CR2 = I2C_CR2_SADD(addr)   |
                I2C_CR2_NBYTES(len)   |
                I2C_CR2_AUTOEND      |
                I2C_CR2_START;
+
     for (uint8_t i = 0U; i < len; i++) {
-        if (i2c_wait(&I2C1_ISR, I2C_ISR_TXIS, 1) < 0) return -1;
-        if (I2C1_ISR & I2C_ISR_NACKF) {
-            I2C1_ICR = I2C_ICR_NACKCF;
+        uint32_t t = I2C_TIMEOUT;
+        while (t--) {
+            if (I2C1_ISR & I2C_ISR_NACKF) break;
+            if (I2C1_ISR & I2C_ISR_TXIS) break;
+        }
+        if (t == 0U) {
+            I2C1_CR2 = 0U;
             return -1;
         }
+
+        if (I2C1_ISR & I2C_ISR_NACKF) {
+            (void)i2c_wait(&I2C1_ISR, I2C_ISR_STOPF, 1);
+            I2C1_ICR = I2C_ICR_NACKCF | I2C_ICR_STOPCF;
+            I2C1_CR2 = 0U;
+            return -1;
+        }
+
         I2C1_TXDR = data[i];
     }
-    if (i2c_wait(&I2C1_ISR, I2C_ISR_STOPF, 1) < 0) return -1;
+
+    if (i2c_wait(&I2C1_ISR, I2C_ISR_STOPF, 1) < 0) {
+        I2C1_CR2 = 0U;
+        return -1;
+    }
     I2C1_ICR = I2C_ICR_STOPCF;
     I2C1_CR2 = 0U;
 
