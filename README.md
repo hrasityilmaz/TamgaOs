@@ -24,7 +24,7 @@ Started as a learning project — now focused on deterministic scheduling, memor
 - Deadline/Response Time Monitor — per-task execution-time tracking (min/avg/max, overrun count vs. budget), independent of scheduler internals — wraps any periodic task's work with begin()/end() timing calls. The kind of timing evidence a DO-178C-style certification process would expect — currently measures response time (wall-clock, including preemption), not WCET.
  (note: STM32H753ZI's SysTick is clocked from AHB/8, not the core clock directly )
 - Task Notification  the fastest signal path in the kernel tested on m4 and m7
-
+- Stack High-Water Mark —  M4 and M7 showed consistent ~56-57 bytes per call level, and the deep task measured identically at 900 bytes on both STM32 and K64F.
 
 
 
@@ -95,7 +95,9 @@ Started as a learning project — now focused on deterministic scheduling, memor
 - `tests/stm/test_software_timer.c` — validates one-shot and auto-reload software timers: exact fire counts, `timer_stop()` correctly halting an active periodic timer, and pool-exhaustion behavior
 - `tests/test_tickless_idle.c` — verifies a task delayed via `sched_delay_ms(500)` wakes up at exactly 500ms elapsed with zero measured drift over dozens of cycles
 - `tests/stm/test_deadline_monitor.c` — simulated periodic task with a 10ms max time, 30 cycles, 4 deliberately-heavy cycles to verify overrun detection
-- `tests/test_task_notify.c` — validates give-then-wait, timeout, wait-then-give, and ISR-context notification scenarios
+- `tests/stm/test_task_notify.c` — validates give-then-wait, timeout, wait-then-give, and ISR-context notification scenarios
+- `tests/stm/test_stack_monitor.c` — stack monitor test for stm
+
 Still improving — development notes at https://auctra.app
 
 ---
@@ -143,6 +145,8 @@ Still improving — development notes at https://auctra.app
 - `tests/k64f/test_tickless_idle.c` — K64F port of the tickless idle drift test
 - `tests/k64f/test_deadline_monitor.c` — simulated periodic task with a 10ms max time, 30 cycles, 4 deliberately-heavy cycles to verify overrun detection
 - `tests/k64f/test_task_notify.c` — K64F port of the task notification test, same four scenarios
+- `tests/k64f/test_stack_monitor.c` — stack monitor test for k64f
+
 ---
 
 ## x86 port — Zig & C kernel
