@@ -4,6 +4,7 @@
 #include "task.h"
 #include <stddef.h>
 #include "uart.h"
+#include "stack_monitor.h"
 #include "tamgaos_config.h"
 
 static volatile uint8_t s_tickless_idle_enabled = TAMGAOS_TICKLESS_IDLE_DEFAULT;
@@ -227,6 +228,7 @@ void sched_init(void) {
   s_idle_tcb.func = idle_task_func;
   s_idle_tcb.sp = task_stack_init(&s_idle_tcb.stack[TASK_STACK_SIZE], idle_task_func);
   s_idle_tcb.stack[TASK_STACK_CANARY_INDEX] = TASK_STACK_CANARY_VALUE;
+  stack_monitor_fill(&s_idle_tcb);
 }
 
 int8_t sched_task_create(void (*func)(void), uint8_t priority) {
@@ -244,6 +246,7 @@ int8_t sched_task_create(void (*func)(void), uint8_t priority) {
   t->timed_out = 0U;
   t->sp = task_stack_init(&t->stack[TASK_STACK_SIZE], func);
   t->stack[TASK_STACK_CANARY_INDEX] = TASK_STACK_CANARY_VALUE;
+  stack_monitor_fill(t);
   t->notify_pending = 0U;
   t->notify_value   = 0U;
   s_task_count++;
