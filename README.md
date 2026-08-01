@@ -25,7 +25,7 @@ Started as a learning project — now focused on deterministic scheduling, memor
  (note: STM32H753ZI's SysTick is clocked from AHB/8, not the core clock directly )
 - Task Notification  the fastest signal path in the kernel tested on m4 and m7
 - Stack High-Water Mark —  M4 and M7 showed consistent ~56-57 bytes per call level, and the deep task measured identically at 900 bytes on both STM32 and K64F.
-
+- Jitter Monitor — measures how consistently a periodic task wakes up relative to its expected schedule, independent of per-cycle execution time (that's what Deadline Monitor tracks). tested with 2 task one regular one irregular regular one was everything 2ms anoyher was changing as expected.  
 
 
 
@@ -214,6 +214,10 @@ qemu-system-i386 -cdrom .\TamgaOS.iso -boot d -serial stdio
 .\mkiso_c.ps1
 qemu-system-i386 -cdrom .\TamgaOS_C.iso -boot d -serial stdio
 ```
+
+## Related projects
+
+- [tamga-koruk](https://github.com/hrasityilmaz/tamga-koruk) — a secure bootloader for the STM32H753ZI port, built as an independent project rather than folded into this repo. Verifies firmware integrity/authenticity (HMAC-SHA256, hardware-accelerated via STM32H753ZI's HASH peripheral) before jumping to the application image, with planned rollback protection and A/B partition support. Very early — currently just the basic toolchain (RCC, SysTick, UART) confirmed working on real hardware.  
 
 ---
 
