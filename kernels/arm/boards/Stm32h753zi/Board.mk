@@ -24,6 +24,7 @@ C_SRCS += kernel/core/fault_log.c
 C_SRCS += kernel/core/event.c
 C_SRCS += kernel/core/notify.c
 C_SRCS += kernel/core/stack_monitor.c
+C_SRCS += kernel/core/jitter_monitor.c
 
 # Drivers
 C_SRCS  += drivers/stm32h753zi/uart.c
@@ -34,6 +35,10 @@ C_SRCS += drivers/stm32h753zi/pwm.c
 C_SRCS += drivers/stm32h753zi/adc.c
 C_SRCS += drivers/stm32h753zi/fdcan.c
 C_SRCS += drivers/stm32h753zi/iwdg.c
+
+# Network 
+C_SRCS += drivers/network/stm32h753zi/eth.c
+
 
 
 C_SRCS += actuators/stm/servo.c
@@ -62,11 +67,15 @@ C_SRCS += controls/kalman.c
 # C_SRCS += tests/stm/test_tickless_config_compare.c
 # C_SRCS += tests/stm/test_task_notify.c
 # C_SRCS += tests/stm/test_stack_monitor.c
-C_SRCS += tests/stm/test_bmp280.c
+# C_SRCS += tests/stm/test_bmp280.c
 # C_SRCS += tests/stm/test_i2c_scan.c
+# C_SRCS += tests/stm/test_jitter_monitor.c
+# C_SRCS += tests/stm/test_eth_loopback.c
+C_SRCS += tests/stm/test_eth_link_monitor.c
 
 PYOCD_TARGET = stm32h743xx
 BOARD_INCLUDES += -Iinclude/stm32h753zi
 BOARD_INCLUDES += -Iinclude/sensors
 BOARD_INCLUDES += -Iinclude/controls
 BOARD_INCLUDES += -Iinclude/actuators/stm
+BOARD_INCLUDES += -Iinclude/network/stm32h753zi
