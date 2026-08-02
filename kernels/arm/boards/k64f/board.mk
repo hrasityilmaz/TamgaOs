@@ -23,6 +23,7 @@ C_SRCS += kernel/core/timer.c
 C_SRCS += kernel/core/deadline_monitor.c
 C_SRCS += kernel/core/notify.c
 C_SRCS += kernel/core/stack_monitor.c
+C_SRCS += kernel/core/jitter_monitor.c
 
 # Drivers 
 C_SRCS  += drivers/k64f/uart.c
