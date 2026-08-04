@@ -6,6 +6,6 @@ void systick_delay_ms(uint32_t ms);
 uint32_t systick_get_ms(void);
 void systick_tick_increment(void);
 void systick_isr_hook(void) __attribute__((weak));
-uint32_t systick_tickless_sleep(uint32_t max_ms);   /* <-- EKLE */
+uint32_t systick_tickless_sleep(uint32_t max_ms); // forgot to add !!
 
 #endif /* SYSTICK_H */
