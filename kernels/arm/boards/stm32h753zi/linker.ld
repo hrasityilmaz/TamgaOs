@@ -74,6 +74,14 @@ SECTIONS
     _bss_end = .;
   } > DTCM
 
+  /* -- Heap: grows upward from _end towards _stack_top (DTCM) -- */
+  .heap (NOLOAD) :
+  {
+    . = ALIGN(8);
+    _end = .;
+    PROVIDE(end = .);
+  } > DTCM
+
   /* 
   No-init section (crash logs, debug state, survives reset) 
   will use BKPSRAM for logs.  

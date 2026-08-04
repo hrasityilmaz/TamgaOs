@@ -6,6 +6,17 @@ Started as a learning project — now focused on deterministic scheduling, memor
 ![TamgaOS CAN](images/tamga_can_com.gif)  
 *STM32H753ZI (FDCAN) ↔ FRDM-K64F (FlexCAN) — real two-node bus, SN65HVD230 transceivers, verified ACK on both sides*
 
+arm compiler version:  
+
+```sh
+arm-none-eabi-gcc -v
+..
+..
+Thread model: single
+Supported LTO compression algorithms: zlib zstd
+gcc version 15.3.1 20260627 (Arm GNU Toolchain 15.3.Rel1 (Build arm-15.149)) 
+```
+
 ## Kernel core (shared across all ARM boards)
 
 **Kernel**

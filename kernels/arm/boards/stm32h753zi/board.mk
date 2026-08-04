@@ -4,8 +4,8 @@ CPU_FLAGS += -mfpu=fpv5-d16
 CPU_FLAGS += -mfloat-abi=hard
 # CPU_FLAGS += -mfloat-abi=soft
 
-STARTUP      = boards/stm32h753zi/startup_stm32h753zi.s
-LDSCRIPT     = boards/stm32h753zi/linker.ld
+STARTUP = boards/$(BOARD)/startup_stm32h753zi.s
+LDSCRIPT     = boards/$(BOARD)/linker.ld
 BOARD_DEFINE = BOARD_STM32H753ZI
 
 CPU_FLAGS += -DCORE_CLOCK_HZ=480000000UL
@@ -25,6 +25,9 @@ C_SRCS += kernel/core/event.c
 C_SRCS += kernel/core/notify.c
 C_SRCS += kernel/core/stack_monitor.c
 C_SRCS += kernel/core/jitter_monitor.c
+
+# PORT
+C_SRCS += kernel/port/syscalls.c
 
 # Drivers
 C_SRCS  += drivers/stm32h753zi/uart.c

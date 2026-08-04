@@ -16,6 +16,9 @@ typedef struct {
   task_t *waiters_receive;
 } queue_t;
 
+int queue_try_send(queue_t *q, const void *item);
+int queue_try_receive(queue_t *q, void *item);
+
 /* ISR SAFE */
 static inline int8_t queue_send_from_isr(queue_t *q, const void *item)
 {
@@ -30,8 +33,6 @@ static inline int8_t queue_receive_from_isr(queue_t *q, void *item)
 void queue_init(queue_t *q, void *buffer, uint16_t item_size, uint16_t capacity);
 void queue_send(queue_t *q, const void *item);
 void queue_receive(queue_t *q, void *item);
-int queue_try_send(queue_t *q, const void *item);
-int queue_try_receive(queue_t *q, void *item);
 
 int queue_send_timeout(queue_t *q, const void *item, uint32_t timeout_ms);
 int queue_receive_timeout(queue_t *q, void *item, uint32_t timeout_ms);

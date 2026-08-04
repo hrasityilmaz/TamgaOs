@@ -58,7 +58,12 @@ $(TARGET)_$(BOARD).hex: $(TARGET)_$(BOARD).elf
 flash: $(TARGET)_$(BOARD).bin
 	pyocd flash -t $(PYOCD_TARGET) $(TARGET)_$(BOARD).bin
 
+ifeq ($(OS),Windows_NT)
 clean:
 	powershell -Command "'$(OBJS) $(TARGET)_$(BOARD).elf $(TARGET)_$(BOARD).bin $(TARGET)_$(BOARD).hex $(TARGET)_$(BOARD).map' -split ' ' | ForEach-Object { Remove-Item -ErrorAction SilentlyContinue -Force $$_ }"
+else
+clean:
+	rm -f $(OBJS) $(TARGET)_$(BOARD).elf $(TARGET)_$(BOARD).bin $(TARGET)_$(BOARD).hex $(TARGET)_$(BOARD).map
+endif
 
 .PHONY: all flash clean

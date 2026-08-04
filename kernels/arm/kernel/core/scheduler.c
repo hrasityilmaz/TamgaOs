@@ -6,6 +6,8 @@
 #include "uart.h"
 #include "stack_monitor.h"
 #include "tamgaos_config.h"
+#include "timer.h"    
+#include "systick.h" 
 
 static volatile uint8_t s_tickless_idle_enabled = TAMGAOS_TICKLESS_IDLE_DEFAULT;
 
