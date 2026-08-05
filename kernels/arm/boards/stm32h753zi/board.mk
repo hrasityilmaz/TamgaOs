@@ -42,8 +42,6 @@ C_SRCS += drivers/stm32h753zi/iwdg.c
 # Network 
 C_SRCS += drivers/network/stm32h753zi/eth.c
 
-
-
 C_SRCS += actuators/stm/servo.c
 C_SRCS += sensors/mpu6050.c
 C_SRCS += sensors/bmp280.c
@@ -74,7 +72,9 @@ C_SRCS += controls/kalman.c
 # C_SRCS += tests/stm/test_i2c_scan.c
 # C_SRCS += tests/stm/test_jitter_monitor.c
 # C_SRCS += tests/stm/test_eth_loopback.c
-C_SRCS += tests/stm/test_eth_link_monitor.c
+# C_SRCS += tests/stm/test_eth_link_monitor.c
+# C_SRCS += tests/stm/test_eth_tx_only.c
+C_SRCS += tests/stm/test_eth_rx_only.c 
 
 PYOCD_TARGET = stm32h743xx
 BOARD_INCLUDES += -Iinclude/stm32h753zi
