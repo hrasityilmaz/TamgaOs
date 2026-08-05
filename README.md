@@ -29,6 +29,7 @@ gcc version 15.3.1 20260627 (Arm GNU Toolchain 15.3.Rel1 (Build arm-15.149))
 - Queue — fixed-size circular buffer, priority-ordered wait list on both the send side and the receive side (a task blocked on a full/empty queue is served in priority order, not FIFO order)
 - Event flags (event groups) — bitmask-based `EVENT_WAIT_ANY` / `EVENT_WAIT_ALL` waiting with optional auto-clear on wake
 - Timeout support across the board — `mutex_lock_timeout`, `queue_send_timeout`, `queue_receive_timeout`, `event_wait_timeout` all bound their wait on an absolute deadline (via `systick_get_ms()`), so a task that wakes and loses a race re-arms only the *remaining* budget instead of the full timeout again
+- ISR-Safe primitives — `queue_send_from_isr`/`queue_receive_from_isr`/`event_set_from_isr`/`event_clear_from_isr`, verified from a real interrupt context (not simulated), including a deliberate flood test where 977/1000 ISR-context sends correctly returned an immediate error instead of ever hanging the interrupt
 - Critical section (cpsid/cpsie)
 - Software Timer — fixed-size static pool (no dynamic allocation) of one-shot and auto-reload timers
 - Tickless Idle — Already not checking every 1ms tick. Verified on both boards with zero measured drift: a task requesting `sched_delay_ms(500)` woke up at exactly 500ms elapsed.
@@ -81,13 +82,15 @@ gcc version 15.3.1 20260627 (Arm GNU Toolchain 15.3.Rel1 (Build arm-15.149))
 - RCC (HSI 64MHz and HSE/PLL1 480MHz)
 - UART (USART3, 115200, Virtual COM via ST-Link)
 - I2C (I2C1 PB8/PB9 AF4)
-- FDCAN1 (PB8=RX (AF9), PB9=TX (AF9) — PA11/PA12 they're tied to USB OTG FS) — verified on a real two-node bus: internal loopback passes, and with an SN65HVD230 transceiver on each board, STM32 and K64F exchange frames continuously with zero ACK failures on either side
+- FDCAN1 (PB8=RX (AF9), PB9=TX (AF9) — PA11/PA12 they're tied to USB OTG FS) — verified on a real two-node bus: internal loopback passes, and with an SN65HVD230 transceiver on each board, STM32 and K64F exchange frames continuously with zero ACK failures on either side, plus an ARINC825-inspired application-layer message format on top (categorized CAN ID ranges by criticality, a standard node/sequence/data-type header, and a periodic per-node heartbeat so a lost link is detected as a health event rather than inferred from a missing specific message type)
 - IWDG (Independent Watchdog, LSI-clocked, software-configurable timeout)
 - PWM (TIM2_CH1, PA0 / Arduino D32, 50Hz/1-2ms hobby servo & ESC convention) — verified with a logic analyzer: clean 20.0ms period, pulse width tracking the requested 1000-2000us value exactly.  
 - ADC1 (PA3 / Arduino A0, ADC1_INP15, single-conversion polling mode, 16-bit resolution) — verified end-to-end
+- Ethernet MAC+DMA (RMII, register-level, no HAL) — PHY link detection via MDIO (LAN8742, PHY ID confirmed), TX and RX both fully verified end-to-end on real hardware: TX payload confirmed byte-for-byte in Wireshark, RX confirmed with 50/50 zero-loss unicast test frames sent from a PC. Went through seven distinct root causes during bring-up (DTCM being DMA-unreachable, tail-pointer semantics, D-Cache coherency + MPU memory-type selection, linker alignment, unset RX buffer size, unset MTL store-and-forward, unset MAC address filter) — full writeup at https://auctra.app
 
 **Sensors**
-- MPU6050
+- MPU6050 (I2C, accel/gyro, feeds the shared Kalman filter)
+- BMP280 (I2C, address 0x76 — misidentified as a BMP180 for most of a debugging session before a bus scan caught it) — pressure/temperature/zero-referenced relative altitude
 
 **Tests**
 - `tests/stm/test_mutex_priority_inheritance.c` — validates elevate/restore behavior under LOW/HIGH/MED priority contention
@@ -108,6 +111,9 @@ gcc version 15.3.1 20260627 (Arm GNU Toolchain 15.3.Rel1 (Build arm-15.149))
 - `tests/stm/test_deadline_monitor.c` — simulated periodic task with a 10ms max time, 30 cycles, 4 deliberately-heavy cycles to verify overrun detection
 - `tests/stm/test_task_notify.c` — validates give-then-wait, timeout, wait-then-give, and ISR-context notification scenarios
 - `tests/stm/test_stack_monitor.c` — stack monitor test for stm
+- `tests/stm/test_eth_link_monitor.c` — PHY link up/down + speed/duplex, real cable plug/unplug
+- `tests/stm/test_eth_tx_only.c` — continuous TX, confirmed byte-for-byte in Wireshark on a connected PC
+- `tests/stm/test_eth_rx_only.c` — real unicast RX, 50/50 test frames received with zero loss
 
 Still improving — development notes at https://auctra.app
 
@@ -144,6 +150,7 @@ Still improving — development notes at https://auctra.app
 - MCG
 - FlexCAN0 (PTB18=TX (ALT2), PTB19=RX (ALT2)) — verified on a real two-node bus: internal loopback passes (5 sequential frames, no drops), and with an SN65HVD230 transceiver, K64F and STM32 exchange frames continuously with zero ACK failures on either side.
 - PWM (FTM0 + FTM3, 4 channels: PTC1=FTM0_CH0/ALT4, PTC5=FTM0_CH2/ALT7, PTC8=FTM3_CH4/ALT3, PTC9=FTM3_CH5/ALT3 — 50Hz/1-2ms hobby servo & ESC convention) — verified on all 4 channels with a logic analyzer.  
+- ADC0 (PTB2 / Arduino A0, ADC0_SE12, 12-bit) — full-range sweep verified with a potentiometer
 
 **Tests**
 - `tests/k64f/test_queue_priority_order.c` — K64F port of the queue priority-order test
@@ -226,9 +233,13 @@ qemu-system-i386 -cdrom .\TamgaOS.iso -boot d -serial stdio
 qemu-system-i386 -cdrom .\TamgaOS_C.iso -boot d -serial stdio
 ```
 
+## Ethernet deep dive
+
+Full writeup of the seven-bug DMA/cache/MAC-filtering behind the Ethernet driver above (DTCM being DMA-unreachable, tail-pointer semantics, D-Cache coherency + MPU memory-type selection, linker alignment, unset RX buffer size, unset MTL store-and-forward, unset MAC address filter): https://auctra.app  (part 10 and prt 11)
+
 ## Related projects
 
-- [tamga-koruk](https://github.com/hrasityilmaz/tamga-koruk) — a secure bootloader for the STM32H753ZI port, built as an independent project rather than folded into this repo. Verifies firmware integrity/authenticity (HMAC-SHA256, hardware-accelerated via STM32H753ZI's HASH peripheral) before jumping to the application image, with planned rollback protection and A/B partition support. Very early — currently just the basic toolchain (RCC, SysTick, UART) confirmed working on real hardware.  
+- [tamga-koruk](https://github.com/hrasityilmaz/tamga-koruk) — a secure bootloader for the STM32H753ZI port, built as an independent project rather than folded into this repo. Verifies firmware integrity/authenticity (HMAC-SHA256, hardware-accelerated via STM32H753ZI's HASH peripheral) before jumping to the application image, with planned rollback protection and A/B partition support. Very early — currently just the basic toolchain (RCC, SysTick, UART) confirmed working on real hardware (ı put simple blink code on main...)
 
 ---
 
