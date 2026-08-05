@@ -19,10 +19,10 @@
  *          are enabled, otherwise unpredictable behavior can occur."
  */
 
-/* ─────────────────────────────────────────────────────────────────────────
+/*
  * Vector table — 16 system exceptions + 150 IRQs = 166 entries
  * REF: RM0433 Table 145
- * ───────────────────────────────────────────────────────────────────────── */
+ **/
 .section .vectors, "a", %progbits
 .align 10
 _vectors:
@@ -196,30 +196,30 @@ _vectors:
     .word  0                        /* 148 reserved */
     .word  Default_Handler          /* 149 WKUP */
 
-/* ─────────────────────────────────────────────────────────────────────────
+/*
  * Cache addresses MUST CONTROL !!!  (PM0253 Section 4.8)
- * ───────────────────────────────────────────────────────────────────────── */
+ **/
 .equ ICIALLU,  0xE000EF50   /* I-Cache invalidate all */
 .equ CSSELR,   0xE000ED84   /* Cache size selection */
 .equ CCSIDR,   0xE000ED80   /* Cache size ID */
 .equ DCISW,    0xE000EF60   /* D-Cache invalidate by set/way */
 .equ CCR,      0xE000ED14   /* Configuration and control register */
 
-/* ─────────────────────────────────────────────────────────────────────────
+/* 
  * Reset Handler
  * REF: PM0253 Section 4.8 — cache must be invalidated before enabling
- * ───────────────────────────────────────────────────────────────────────── */
+ **/
 .section .text, "ax", %progbits
 .thumb_func
 .global Reset_Handler
 Reset_Handler:
 
-    /* ── 0. ExitRun0Mode — must be done before writing to RAM
+    /* 0. ExitRun0Mode — must be done before writing to RAM
      *    STM32H7 starts in Run* mode where RAM writes are forbidden
      *    until PWR supply is configured. LDO supply: set LDOEN (bit1)
      *    in PWR_CR3 and wait for ACTVOSRDY (bit13) in PWR_CSR1.
      *    REF: RM0433 Section 6.4 (power-up sequence)
-     * ── */
+     * */
     ldr  r1, =0x58024800       @ PWR base
     ldr  r0, [r1, #0x00C]      @ PWR_CR3 offset 0x00C
     orr  r0, r0, #(1 << 1)     @ LDOEN bit1
@@ -229,7 +229,6 @@ Reset_Handler:
     tst  r0, #(1 << 13)        @ ACTVOSRDY bit13
     beq  .Lwait_actvosrdy
 
-    /* ── 1. Invalidate I-Cache (PM0253: write 0 to ICIALLU) ── */
     /* page 243 Invalidate cache code  */
     ldr  r11, =ICIALLU
     mov  r0,  #0
@@ -237,7 +236,6 @@ Reset_Handler:
     dsb
     isb
 
-    /* ── 2. Invalidate D-Cache by set/way (PM0253 Section 4.8) ── */
     mov  r0,  #0
     ldr  r11, =CSSELR
     str  r0,  [r11]             /* select D-Cache level 0 */
@@ -268,7 +266,6 @@ Reset_Handler:
     dsb
     isb
 
-    /* ── 3. Enable I-Cache + D-Cache together (PM0253: CCR.IC | CCR.DC) ── */
     ldr  r11, =CCR
     ldr  r0,  [r11]
     orr  r0,  r0, #(1 << 16)   /* DC bit */
@@ -277,7 +274,6 @@ Reset_Handler:
     dsb
     isb
 
-     /* ── 3.5. FPU enable — CPACR CP10/CP11 full access ── */
     ldr  r0, =0xE000ED88
     ldr  r1, [r0]
     orr  r1, r1, #(0xF << 20)
@@ -285,7 +281,6 @@ Reset_Handler:
     dsb
     isb
     
-    /* ── 4. Copy .data: Flash → DTCM ── */
     ldr  r0, =_data_start
     ldr  r1, =_data_end
     ldr  r2, =_data_load
@@ -297,7 +292,6 @@ Reset_Handler:
     cmp  r0, r1
     blt  .Lcopy_loop
 
-    /* ── 5. Zero .bss in DTCM ── */
 .Lbss_init:
     ldr  r0, =_bss_start
     ldr  r1, =_bss_end
@@ -308,15 +302,14 @@ Reset_Handler:
     str  r2, [r0], #4
     b    .Lbss_loop
 
-    /* ── 6. Jump to main ── */
 .Lcall_main:
     bl   main
 .Lhang:
     b    .Lhang
 
-/* ─────────────────────────────────────────────────────────────────────────
+/*
  * Default / Weak handlers
- * ───────────────────────────────────────────────────────────────────────── */
+ **/
 .thumb_func
 .global Default_Handler
 Default_Handler:
