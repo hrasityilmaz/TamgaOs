@@ -41,7 +41,6 @@ SECTIONS
     KEEP(*(.vectors))
   } > FLASH_BANK1
 
-  /* -- Code + read-only data -- */
   .text :
   {
     *(.text*)
@@ -98,9 +97,10 @@ SECTIONS
   */
 
   /* --AXI SRAM -- */
+
   .axi_bss (NOLOAD) :
   {
-    . = ALIGN(4);
+    . = ALIGN(8192);
     _axi_bss_start = .;
     *(.axi_bss*)
     . = ALIGN(4);
