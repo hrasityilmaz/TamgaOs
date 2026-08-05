@@ -13,6 +13,7 @@
 
 #include <stdint.h>
 #include "fault_log.h"
+#include "tamgaos_compiler.h"
 
 #define SCB_CFSR   (*(volatile uint32_t *)0xE000ED28U)
 #define SCB_HFSR   (*(volatile uint32_t *)0xE000ED2CU)
@@ -60,7 +61,7 @@ static void hf_print_reg(const char *name, uint32_t val) {
   hf_puts("\r\n");
 }
 
-__attribute__((naked))
+TAMGAOS_NAKED
 void HardFault_Handler(void)
 {
     __asm volatile(
@@ -72,7 +73,7 @@ void HardFault_Handler(void)
         "b hardfault_c      \n");
 }
 
-__attribute__((naked))
+TAMGAOS_NAKED
 void MemManage_Handler(void)
 {
     __asm volatile(
@@ -84,7 +85,7 @@ void MemManage_Handler(void)
         "b hardfault_c      \n");
 }
 
-__attribute__((naked))
+TAMGAOS_NAKED
 void BusFault_Handler(void)
 {
     __asm volatile(
@@ -96,7 +97,7 @@ void BusFault_Handler(void)
         "b hardfault_c      \n");
 }
 
-__attribute__((naked))
+TAMGAOS_NAKED
 void UsageFault_Handler(void)
 {
     __asm volatile(
@@ -191,15 +192,9 @@ void hardfault_c(uint32_t *sp, uint32_t exc_return)
     SCB_CFSR = hf_cfsr;
 
     /*
-     * NOTE: bkpt #0 was here previously. Removed deliberately — on
-     * real hardware with no debugger attached, executing BKPT is not
-     * a no-op: the CPU treats it as an unhandled debug event and
-     * faults again immediately (observed as a second, nested
-     * "*** FAULT ***" dump right after this one, with no reboot in
-     * between — HFSR.FORCED set on the second dump confirms this).
+     * NOTE: bkpt #0 was here previously. removed
      * If you want breakpoint-on-fault behavior for an actual GDB
-     * session, gate it behind a build flag so it isn't hit on
-     * unattended/field runs:
+     * session add 
      *
      *   #ifdef FAULT_HANDLER_DEBUGGER_ATTACHED
      *   __asm volatile("bkpt #0");
