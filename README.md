@@ -3,6 +3,11 @@
 Bare-metal RTOS written in C and ARM assembly.  
 Started as a learning project — now focused on deterministic scheduling, memory protection, and debuggability.
 
+![TamgaOS Ethernet](images/packet.gif)  
+*STM32H753ZI ethernet test 
+
+
+
 ![TamgaOS CAN](images/tamga_can_com.gif)  
 *STM32H753ZI (FDCAN) ↔ FRDM-K64F (FlexCAN) — real two-node bus, SN65HVD230 transceivers, verified ACK on both sides*
 
